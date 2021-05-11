@@ -13,31 +13,31 @@ enclave
 		public void ecall_gen_ctr([out, size=len] uint8_t * ctr, size_t len);
 
 		public void ecall_encrypt([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								  [in, string] const char * path,
-								  [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
+		                          [in, string] const char * path,
+		                          [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
 		public void ecall_decrypt([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								  [in, string] const char * path,
-								  [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
+		                          [in, string] const char * path,
+		                          [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
 
 		void ecall_encrypt_aes_ctr([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								   [in, size=lenPlain] char * plain, size_t lenPlain,
-								   [in, out, size=lenCount] uint8_t * count, size_t lenCount,
-								   [out, size=lenCrypt] uint8_t * crypt, size_t lenCrypt);
+		                           [in, size=lenPlain] char * plain, size_t lenPlain,
+		                           [in, out, size=lenCount] uint8_t * count, size_t lenCount,
+		                           [out, size=lenCrypt] uint8_t * crypt, size_t lenCrypt);
 		void ecall_decrypt_aes_ctr([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								   [in, size=lenCrypt] uint8_t * crypt, size_t lenCrypt,
-								   [in, out, size=lenCount] uint8_t * count, size_t lenCount,
-								   [out, size=lenPlain] char * plain, size_t lenPlain);
+		                           [in, size=lenCrypt] uint8_t * crypt, size_t lenCrypt,
+		                           [in, out, size=lenCount] uint8_t * count, size_t lenCount,
+		                           [out, size=lenPlain] char * plain, size_t lenPlain);
     };
 	
     /* OCALL definitions */
     untrusted
 	{
 		void ocall_encrypt_file([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								[in, string] const char * path,
-								[in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen) allow(ecall_encrypt_aes_ctr);
+		                        [in, string] const char * path,
+		                        [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen) allow(ecall_encrypt_aes_ctr);
 		void ocall_decrypt_file([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								[in, string] const char * path,
-								[in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen) allow(ecall_decrypt_aes_ctr);
+		                        [in, string] const char * path,
+		                        [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen) allow(ecall_decrypt_aes_ctr);
 
 		/* Debug foos */
 		void ocall_printf([in, string] const char * str);
