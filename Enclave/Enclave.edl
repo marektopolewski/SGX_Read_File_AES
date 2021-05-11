@@ -19,11 +19,11 @@ enclave
 								  [in, string] const char * path,
 								  [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
 
-        void ecall_encrypt_aes_ctr([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
+		void ecall_encrypt_aes_ctr([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
 								   [in, size=lenPlain] char * plain, size_t lenPlain,
 								   [in, out, size=lenCount] uint8_t * count, size_t lenCount,
 								   [out, size=lenCrypt] uint8_t * crypt, size_t lenCrypt);
-        void ecall_decrypt_aes_ctr([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
+		void ecall_decrypt_aes_ctr([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
 								   [in, size=lenCrypt] uint8_t * crypt, size_t lenCrypt,
 								   [in, out, size=lenCount] uint8_t * count, size_t lenCount,
 								   [out, size=lenPlain] char * plain, size_t lenPlain);
