@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <chrono>
 
 sgx_enclave_id_t global_eid = 0;
 
@@ -53,13 +54,19 @@ int SGX_CDECL main(int argc, char *argv[])
 	memcpy(iv_copy, iv, SGX_AESCTR_CTR_SIZE);
 	printf("done.\n");
 
-	printf("Encrypting... ");
+	printf("Encrypting with switches... ");
+	auto start1 = std::chrono::steady_clock::now();
 	ecall_encrypt(global_eid, key, sealLen, FILE_RAW_PATH, iv, SGX_AESCTR_CTR_SIZE);
-	printf("done.\n");
+	auto end1 = std::chrono::steady_clock::now();
+	long long int diff1 = std::chrono::duration_cast<std::chrono::nanoseconds>(end1 - start1).count();
+	printf("done in %lld.\n", diff1);
 
 	printf("Decrypting...\n");
+	auto start2 = std::chrono::steady_clock::now();
 	ecall_decrypt(global_eid, key, sealLen, FILE_ENC_PATH, iv_copy, SGX_AESCTR_CTR_SIZE);
-	printf("done.\n");
+	auto end2 = std::chrono::steady_clock::now();
+	long long int diff2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end2 - start2).count();
+	printf("done in %lld.\n", diff2);
 
 	destroy_enclave();
 	printf("Enclave stopped.\n");

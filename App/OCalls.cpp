@@ -36,9 +36,7 @@ void ocall_printf_hex(const uint8_t * num, size_t len)
 	_printf_hex(num, len);
 }
 
-void ocall_encrypt_file(uint8_t * sealKey, size_t sealLen,
-						const char * path,
-						uint8_t * ctr, size_t ctrLen)
+void ocall_encrypt_file(const char * path, uint8_t * ctr, size_t ctrLen)
 {
 	// Open files
 	FILE * file_to_read;
@@ -67,8 +65,7 @@ void ocall_encrypt_file(uint8_t * sealKey, size_t sealLen,
 
 		// Encrypt chunk
 		uint8_t enc_buffer[READ_BUFFER_SIZE];
-		ecall_encrypt_aes_ctr(global_eid, sealKey, sealLen, read_buffer,
-							  size_read, ctr, ctrLen, enc_buffer, size_read);
+		ecall_encrypt_aes_ctr(global_eid, read_buffer, size_read, ctr, ctrLen, enc_buffer, size_read);
 
 		// Save to disk
 		fwrite(enc_buffer, sizeof(uint8_t), size_read, file_to_write);
@@ -80,9 +77,7 @@ void ocall_encrypt_file(uint8_t * sealKey, size_t sealLen,
 }
 
 
-void ocall_decrypt_file(uint8_t * sealKey, size_t sealLen,
-						const char * path,
-						uint8_t * ctr, size_t ctrLen)
+void ocall_decrypt_file(const char * path, uint8_t * ctr, size_t ctrLen)
 {
 	// Open file
 	FILE * file_to_read;
@@ -100,8 +95,7 @@ void ocall_decrypt_file(uint8_t * sealKey, size_t sealLen,
 
 		// Decrypt chunk
 		char dec_buffer[READ_BUFFER_SIZE + 1];
-		ecall_decrypt_aes_ctr(global_eid, sealKey, sealLen, read_buffer,
-							  size_read, ctr, ctrLen, dec_buffer, size_read);
+		ecall_decrypt_aes_ctr(global_eid, read_buffer, size_read, ctr, ctrLen, dec_buffer, size_read);
 		dec_buffer[size_read] = '\0';
 
 		// Print to stdout

@@ -17,11 +17,11 @@ extern "C" {
 
 #ifndef OCALL_ENCRYPT_FILE_DEFINED__
 #define OCALL_ENCRYPT_FILE_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_encrypt_file, (uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen));
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_encrypt_file, (const char* path, uint8_t* ctr, size_t ctrLen));
 #endif
 #ifndef OCALL_DECRYPT_FILE_DEFINED__
 #define OCALL_DECRYPT_FILE_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_decrypt_file, (uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen));
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_decrypt_file, (const char* path, uint8_t* ctr, size_t ctrLen));
 #endif
 #ifndef OCALL_PRINTF_DEFINED__
 #define OCALL_PRINTF_DEFINED__
@@ -65,8 +65,8 @@ sgx_status_t ecall_gen_key(sgx_enclave_id_t eid, uint8_t* key, size_t len);
 sgx_status_t ecall_gen_ctr(sgx_enclave_id_t eid, uint8_t* ctr, size_t len);
 sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
 sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
-sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, char* plain, size_t lenPlain, uint8_t* count, size_t lenCount, uint8_t* crypt, size_t lenCrypt);
-sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, uint8_t* crypt, size_t lenCrypt, uint8_t* count, size_t lenCount, char* plain, size_t lenPlain);
+sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t lenPlain, uint8_t* count, size_t lenCount, uint8_t* crypt, size_t lenCrypt);
+sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* crypt, size_t lenCrypt, uint8_t* count, size_t lenCount, char* plain, size_t lenPlain);
 
 #ifdef __cplusplus
 }

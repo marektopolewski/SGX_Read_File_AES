@@ -35,8 +35,6 @@ typedef struct ms_ecall_decrypt_t {
 } ms_ecall_decrypt_t;
 
 typedef struct ms_ecall_encrypt_aes_ctr_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	char* ms_plain;
 	size_t ms_lenPlain;
 	uint8_t* ms_count;
@@ -46,8 +44,6 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 } ms_ecall_encrypt_aes_ctr_t;
 
 typedef struct ms_ecall_decrypt_aes_ctr_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	uint8_t* ms_crypt;
 	size_t ms_lenCrypt;
 	uint8_t* ms_count;
@@ -57,16 +53,12 @@ typedef struct ms_ecall_decrypt_aes_ctr_t {
 } ms_ecall_decrypt_aes_ctr_t;
 
 typedef struct ms_ocall_encrypt_file_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	const char* ms_path;
 	uint8_t* ms_ctr;
 	size_t ms_ctrLen;
 } ms_ocall_encrypt_file_t;
 
 typedef struct ms_ocall_decrypt_file_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	const char* ms_path;
 	uint8_t* ms_ctr;
 	size_t ms_ctrLen;
@@ -121,7 +113,7 @@ typedef struct ms_u_sgxssl_ftime64_t {
 static sgx_status_t SGX_CDECL Enclave_ocall_encrypt_file(void* pms)
 {
 	ms_ocall_encrypt_file_t* ms = SGX_CAST(ms_ocall_encrypt_file_t*, pms);
-	ocall_encrypt_file(ms->ms_sealKey, ms->ms_sealLen, ms->ms_path, ms->ms_ctr, ms->ms_ctrLen);
+	ocall_encrypt_file(ms->ms_path, ms->ms_ctr, ms->ms_ctrLen);
 
 	return SGX_SUCCESS;
 }
@@ -129,7 +121,7 @@ static sgx_status_t SGX_CDECL Enclave_ocall_encrypt_file(void* pms)
 static sgx_status_t SGX_CDECL Enclave_ocall_decrypt_file(void* pms)
 {
 	ms_ocall_decrypt_file_t* ms = SGX_CAST(ms_ocall_decrypt_file_t*, pms);
-	ocall_decrypt_file(ms->ms_sealKey, ms->ms_sealLen, ms->ms_path, ms->ms_ctr, ms->ms_ctrLen);
+	ocall_decrypt_file(ms->ms_path, ms->ms_ctr, ms->ms_ctrLen);
 
 	return SGX_SUCCESS;
 }
@@ -284,12 +276,10 @@ sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLe
 	return status;
 }
 
-sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, char* plain, size_t lenPlain, uint8_t* count, size_t lenCount, uint8_t* crypt, size_t lenCrypt)
+sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t lenPlain, uint8_t* count, size_t lenCount, uint8_t* crypt, size_t lenCrypt)
 {
 	sgx_status_t status;
 	ms_ecall_encrypt_aes_ctr_t ms;
-	ms.ms_sealKey = sealKey;
-	ms.ms_sealLen = sealLen;
 	ms.ms_plain = plain;
 	ms.ms_lenPlain = lenPlain;
 	ms.ms_count = count;
@@ -300,12 +290,10 @@ sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* sealKey, size_
 	return status;
 }
 
-sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, uint8_t* crypt, size_t lenCrypt, uint8_t* count, size_t lenCount, char* plain, size_t lenPlain)
+sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* crypt, size_t lenCrypt, uint8_t* count, size_t lenCount, char* plain, size_t lenPlain)
 {
 	sgx_status_t status;
 	ms_ecall_decrypt_aes_ctr_t ms;
-	ms.ms_sealKey = sealKey;
-	ms.ms_sealLen = sealLen;
 	ms.ms_crypt = crypt;
 	ms.ms_lenCrypt = lenCrypt;
 	ms.ms_count = count;

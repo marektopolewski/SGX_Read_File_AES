@@ -14,15 +14,12 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Generated Files">
-      <UniqueIdentifier>{a4d01273-d937-4a6b-8db1-932d5a06310a}</UniqueIdentifier>
+      <UniqueIdentifier>{b4aa453a-a3ac-401a-98ea-27df4ab00136}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Enclave_u.c">
-      <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="ErrorSignal.cpp">
       <Filter>Source Files</Filter>
@@ -30,11 +27,11 @@
     <ClCompile Include="OCalls.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Enclave_u.c">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Enclave_u.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="App.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -46,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="OCalls.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Enclave_u.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

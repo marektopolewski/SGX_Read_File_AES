@@ -61,8 +61,6 @@ typedef struct ms_ecall_decrypt_t {
 } ms_ecall_decrypt_t;
 
 typedef struct ms_ecall_encrypt_aes_ctr_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	char* ms_plain;
 	size_t ms_lenPlain;
 	uint8_t* ms_count;
@@ -72,8 +70,6 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 } ms_ecall_encrypt_aes_ctr_t;
 
 typedef struct ms_ecall_decrypt_aes_ctr_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	uint8_t* ms_crypt;
 	size_t ms_lenCrypt;
 	uint8_t* ms_count;
@@ -83,16 +79,12 @@ typedef struct ms_ecall_decrypt_aes_ctr_t {
 } ms_ecall_decrypt_aes_ctr_t;
 
 typedef struct ms_ocall_encrypt_file_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	const char* ms_path;
 	uint8_t* ms_ctr;
 	size_t ms_ctrLen;
 } ms_ocall_encrypt_file_t;
 
 typedef struct ms_ocall_decrypt_file_t {
-	uint8_t* ms_sealKey;
-	size_t ms_sealLen;
 	const char* ms_path;
 	uint8_t* ms_ctr;
 	size_t ms_ctrLen;
@@ -504,10 +496,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 	sgx_lfence();
 	ms_ecall_encrypt_aes_ctr_t* ms = SGX_CAST(ms_ecall_encrypt_aes_ctr_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	uint8_t* _tmp_sealKey = ms->ms_sealKey;
-	size_t _tmp_sealLen = ms->ms_sealLen;
-	size_t _len_sealKey = _tmp_sealLen;
-	uint8_t* _in_sealKey = NULL;
 	char* _tmp_plain = ms->ms_plain;
 	size_t _tmp_lenPlain = ms->ms_lenPlain;
 	size_t _len_plain = _tmp_lenPlain;
@@ -521,7 +509,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 	size_t _len_crypt = _tmp_lenCrypt;
 	uint8_t* _in_crypt = NULL;
 
-	CHECK_UNIQUE_POINTER(_tmp_sealKey, _len_sealKey);
 	CHECK_UNIQUE_POINTER(_tmp_plain, _len_plain);
 	CHECK_UNIQUE_POINTER(_tmp_count, _len_count);
 	CHECK_UNIQUE_POINTER(_tmp_crypt, _len_crypt);
@@ -531,24 +518,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 	//
 	sgx_lfence();
 
-	if (_tmp_sealKey != NULL && _len_sealKey != 0) {
-		if ( _len_sealKey % sizeof(*_tmp_sealKey) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_sealKey = (uint8_t*)malloc(_len_sealKey);
-		if (_in_sealKey == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_sealKey, _len_sealKey, _tmp_sealKey, _len_sealKey)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
 	if (_tmp_plain != NULL && _len_plain != 0) {
 		if ( _len_plain % sizeof(*_tmp_plain) != 0)
 		{
@@ -599,7 +568,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 		memset((void*)_in_crypt, 0, _len_crypt);
 	}
 
-	ecall_encrypt_aes_ctr(_in_sealKey, _tmp_sealLen, _in_plain, _tmp_lenPlain, _in_count, _tmp_lenCount, _in_crypt, _tmp_lenCrypt);
+	ecall_encrypt_aes_ctr(_in_plain, _tmp_lenPlain, _in_count, _tmp_lenCount, _in_crypt, _tmp_lenCrypt);
 	if (_in_count) {
 		if (memcpy_s(_tmp_count, _len_count, _in_count, _len_count)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -614,7 +583,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 	}
 
 err:
-	if (_in_sealKey) free(_in_sealKey);
 	if (_in_plain) free(_in_plain);
 	if (_in_count) free(_in_count);
 	if (_in_crypt) free(_in_crypt);
@@ -630,10 +598,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 	sgx_lfence();
 	ms_ecall_decrypt_aes_ctr_t* ms = SGX_CAST(ms_ecall_decrypt_aes_ctr_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	uint8_t* _tmp_sealKey = ms->ms_sealKey;
-	size_t _tmp_sealLen = ms->ms_sealLen;
-	size_t _len_sealKey = _tmp_sealLen;
-	uint8_t* _in_sealKey = NULL;
 	uint8_t* _tmp_crypt = ms->ms_crypt;
 	size_t _tmp_lenCrypt = ms->ms_lenCrypt;
 	size_t _len_crypt = _tmp_lenCrypt;
@@ -647,7 +611,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 	size_t _len_plain = _tmp_lenPlain;
 	char* _in_plain = NULL;
 
-	CHECK_UNIQUE_POINTER(_tmp_sealKey, _len_sealKey);
 	CHECK_UNIQUE_POINTER(_tmp_crypt, _len_crypt);
 	CHECK_UNIQUE_POINTER(_tmp_count, _len_count);
 	CHECK_UNIQUE_POINTER(_tmp_plain, _len_plain);
@@ -657,24 +620,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 	//
 	sgx_lfence();
 
-	if (_tmp_sealKey != NULL && _len_sealKey != 0) {
-		if ( _len_sealKey % sizeof(*_tmp_sealKey) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_sealKey = (uint8_t*)malloc(_len_sealKey);
-		if (_in_sealKey == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_sealKey, _len_sealKey, _tmp_sealKey, _len_sealKey)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
 	if (_tmp_crypt != NULL && _len_crypt != 0) {
 		if ( _len_crypt % sizeof(*_tmp_crypt) != 0)
 		{
@@ -725,7 +670,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 		memset((void*)_in_plain, 0, _len_plain);
 	}
 
-	ecall_decrypt_aes_ctr(_in_sealKey, _tmp_sealLen, _in_crypt, _tmp_lenCrypt, _in_count, _tmp_lenCount, _in_plain, _tmp_lenPlain);
+	ecall_decrypt_aes_ctr(_in_crypt, _tmp_lenCrypt, _in_count, _tmp_lenCount, _in_plain, _tmp_lenPlain);
 	if (_in_count) {
 		if (memcpy_s(_tmp_count, _len_count, _in_count, _len_count)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -740,7 +685,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 	}
 
 err:
-	if (_in_sealKey) free(_in_sealKey);
 	if (_in_crypt) free(_in_crypt);
 	if (_in_count) free(_in_count);
 	if (_in_plain) free(_in_plain);
@@ -784,10 +728,9 @@ SGX_EXTERNC const struct {
 };
 
 
-sgx_status_t SGX_CDECL ocall_encrypt_file(uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen)
+sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path, uint8_t* ctr, size_t ctrLen)
 {
 	sgx_status_t status = SGX_SUCCESS;
-	size_t _len_sealKey = sealLen;
 	size_t _len_path = path ? strlen(path) + 1 : 0;
 	size_t _len_ctr = ctrLen;
 
@@ -797,12 +740,9 @@ sgx_status_t SGX_CDECL ocall_encrypt_file(uint8_t* sealKey, size_t sealLen, cons
 
 	void *__tmp_ctr = NULL;
 
-	CHECK_ENCLAVE_POINTER(sealKey, _len_sealKey);
 	CHECK_ENCLAVE_POINTER(path, _len_path);
 	CHECK_ENCLAVE_POINTER(ctr, _len_ctr);
 
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (sealKey != NULL) ? _len_sealKey : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
 	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (path != NULL) ? _len_path : 0))
 		return SGX_ERROR_INVALID_PARAMETER;
 	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (ctr != NULL) ? _len_ctr : 0))
@@ -817,23 +757,6 @@ sgx_status_t SGX_CDECL ocall_encrypt_file(uint8_t* sealKey, size_t sealLen, cons
 	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_encrypt_file_t));
 	ocalloc_size -= sizeof(ms_ocall_encrypt_file_t);
 
-	if (sealKey != NULL) {
-		ms->ms_sealKey = (uint8_t*)__tmp;
-		if (_len_sealKey % sizeof(*sealKey) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, sealKey, _len_sealKey)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_sealKey);
-		ocalloc_size -= _len_sealKey;
-	} else {
-		ms->ms_sealKey = NULL;
-	}
-	
-	ms->ms_sealLen = sealLen;
 	if (path != NULL) {
 		ms->ms_path = (const char*)__tmp;
 		if (_len_path % sizeof(*path) != 0) {
@@ -882,10 +805,9 @@ sgx_status_t SGX_CDECL ocall_encrypt_file(uint8_t* sealKey, size_t sealLen, cons
 	return status;
 }
 
-sgx_status_t SGX_CDECL ocall_decrypt_file(uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen)
+sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path, uint8_t* ctr, size_t ctrLen)
 {
 	sgx_status_t status = SGX_SUCCESS;
-	size_t _len_sealKey = sealLen;
 	size_t _len_path = path ? strlen(path) + 1 : 0;
 	size_t _len_ctr = ctrLen;
 
@@ -895,12 +817,9 @@ sgx_status_t SGX_CDECL ocall_decrypt_file(uint8_t* sealKey, size_t sealLen, cons
 
 	void *__tmp_ctr = NULL;
 
-	CHECK_ENCLAVE_POINTER(sealKey, _len_sealKey);
 	CHECK_ENCLAVE_POINTER(path, _len_path);
 	CHECK_ENCLAVE_POINTER(ctr, _len_ctr);
 
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (sealKey != NULL) ? _len_sealKey : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
 	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (path != NULL) ? _len_path : 0))
 		return SGX_ERROR_INVALID_PARAMETER;
 	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (ctr != NULL) ? _len_ctr : 0))
@@ -915,23 +834,6 @@ sgx_status_t SGX_CDECL ocall_decrypt_file(uint8_t* sealKey, size_t sealLen, cons
 	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_decrypt_file_t));
 	ocalloc_size -= sizeof(ms_ocall_decrypt_file_t);
 
-	if (sealKey != NULL) {
-		ms->ms_sealKey = (uint8_t*)__tmp;
-		if (_len_sealKey % sizeof(*sealKey) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, sealKey, _len_sealKey)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_sealKey);
-		ocalloc_size -= _len_sealKey;
-	} else {
-		ms->ms_sealKey = NULL;
-	}
-	
-	ms->ms_sealLen = sealLen;
 	if (path != NULL) {
 		ms->ms_path = (const char*)__tmp;
 		if (_len_path % sizeof(*path) != 0) {
