@@ -63,8 +63,6 @@ typedef struct ms_ecall_decrypt_t {
 typedef struct ms_ecall_encrypt_aes_ctr_t {
 	char* ms_plain;
 	size_t ms_lenPlain;
-	uint8_t* ms_count;
-	size_t ms_lenCount;
 	uint8_t* ms_crypt;
 	size_t ms_lenCrypt;
 } ms_ecall_encrypt_aes_ctr_t;
@@ -72,22 +70,25 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 typedef struct ms_ecall_decrypt_aes_ctr_t {
 	uint8_t* ms_crypt;
 	size_t ms_lenCrypt;
-	uint8_t* ms_count;
-	size_t ms_lenCount;
 	char* ms_plain;
 	size_t ms_lenPlain;
 } ms_ecall_decrypt_aes_ctr_t;
 
+typedef struct ms_sl_init_switchless_t {
+	sgx_status_t ms_retval;
+	void* ms_sl_data;
+} ms_sl_init_switchless_t;
+
+typedef struct ms_sl_run_switchless_tworker_t {
+	sgx_status_t ms_retval;
+} ms_sl_run_switchless_tworker_t;
+
 typedef struct ms_ocall_encrypt_file_t {
 	const char* ms_path;
-	uint8_t* ms_ctr;
-	size_t ms_ctrLen;
 } ms_ocall_encrypt_file_t;
 
 typedef struct ms_ocall_decrypt_file_t {
 	const char* ms_path;
-	uint8_t* ms_ctr;
-	size_t ms_ctrLen;
 } ms_ocall_decrypt_file_t;
 
 typedef struct ms_ocall_printf_t {
@@ -500,17 +501,12 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 	size_t _tmp_lenPlain = ms->ms_lenPlain;
 	size_t _len_plain = _tmp_lenPlain;
 	char* _in_plain = NULL;
-	uint8_t* _tmp_count = ms->ms_count;
-	size_t _tmp_lenCount = ms->ms_lenCount;
-	size_t _len_count = _tmp_lenCount;
-	uint8_t* _in_count = NULL;
 	uint8_t* _tmp_crypt = ms->ms_crypt;
 	size_t _tmp_lenCrypt = ms->ms_lenCrypt;
 	size_t _len_crypt = _tmp_lenCrypt;
 	uint8_t* _in_crypt = NULL;
 
 	CHECK_UNIQUE_POINTER(_tmp_plain, _len_plain);
-	CHECK_UNIQUE_POINTER(_tmp_count, _len_count);
 	CHECK_UNIQUE_POINTER(_tmp_crypt, _len_crypt);
 
 	//
@@ -536,24 +532,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 		}
 
 	}
-	if (_tmp_count != NULL && _len_count != 0) {
-		if ( _len_count % sizeof(*_tmp_count) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_count = (uint8_t*)malloc(_len_count);
-		if (_in_count == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_count, _len_count, _tmp_count, _len_count)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
 	if (_tmp_crypt != NULL && _len_crypt != 0) {
 		if ( _len_crypt % sizeof(*_tmp_crypt) != 0)
 		{
@@ -568,13 +546,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 		memset((void*)_in_crypt, 0, _len_crypt);
 	}
 
-	ecall_encrypt_aes_ctr(_in_plain, _tmp_lenPlain, _in_count, _tmp_lenCount, _in_crypt, _tmp_lenCrypt);
-	if (_in_count) {
-		if (memcpy_s(_tmp_count, _len_count, _in_count, _len_count)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
+	ecall_encrypt_aes_ctr(_in_plain, _tmp_lenPlain, _in_crypt, _tmp_lenCrypt);
 	if (_in_crypt) {
 		if (memcpy_s(_tmp_crypt, _len_crypt, _in_crypt, _len_crypt)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -584,7 +556,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt_aes_ctr(void* pms)
 
 err:
 	if (_in_plain) free(_in_plain);
-	if (_in_count) free(_in_count);
 	if (_in_crypt) free(_in_crypt);
 	return status;
 }
@@ -602,17 +573,12 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 	size_t _tmp_lenCrypt = ms->ms_lenCrypt;
 	size_t _len_crypt = _tmp_lenCrypt;
 	uint8_t* _in_crypt = NULL;
-	uint8_t* _tmp_count = ms->ms_count;
-	size_t _tmp_lenCount = ms->ms_lenCount;
-	size_t _len_count = _tmp_lenCount;
-	uint8_t* _in_count = NULL;
 	char* _tmp_plain = ms->ms_plain;
 	size_t _tmp_lenPlain = ms->ms_lenPlain;
 	size_t _len_plain = _tmp_lenPlain;
 	char* _in_plain = NULL;
 
 	CHECK_UNIQUE_POINTER(_tmp_crypt, _len_crypt);
-	CHECK_UNIQUE_POINTER(_tmp_count, _len_count);
 	CHECK_UNIQUE_POINTER(_tmp_plain, _len_plain);
 
 	//
@@ -638,24 +604,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 		}
 
 	}
-	if (_tmp_count != NULL && _len_count != 0) {
-		if ( _len_count % sizeof(*_tmp_count) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_count = (uint8_t*)malloc(_len_count);
-		if (_in_count == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_count, _len_count, _tmp_count, _len_count)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
 	if (_tmp_plain != NULL && _len_plain != 0) {
 		if ( _len_plain % sizeof(*_tmp_plain) != 0)
 		{
@@ -670,13 +618,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 		memset((void*)_in_plain, 0, _len_plain);
 	}
 
-	ecall_decrypt_aes_ctr(_in_crypt, _tmp_lenCrypt, _in_count, _tmp_lenCount, _in_plain, _tmp_lenPlain);
-	if (_in_count) {
-		if (memcpy_s(_tmp_count, _len_count, _in_count, _len_count)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
+	ecall_decrypt_aes_ctr(_in_crypt, _tmp_lenCrypt, _in_plain, _tmp_lenPlain);
 	if (_in_plain) {
 		if (memcpy_s(_tmp_plain, _len_plain, _in_plain, _len_plain)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -686,16 +628,52 @@ static sgx_status_t SGX_CDECL sgx_ecall_decrypt_aes_ctr(void* pms)
 
 err:
 	if (_in_crypt) free(_in_crypt);
-	if (_in_count) free(_in_count);
 	if (_in_plain) free(_in_plain);
+	return status;
+}
+
+static sgx_status_t SGX_CDECL sgx_sl_init_switchless(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_sl_init_switchless_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_sl_init_switchless_t* ms = SGX_CAST(ms_sl_init_switchless_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	void* _tmp_sl_data = ms->ms_sl_data;
+
+
+
+	ms->ms_retval = sl_init_switchless(_tmp_sl_data);
+
+
+	return status;
+}
+
+static sgx_status_t SGX_CDECL sgx_sl_run_switchless_tworker(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_sl_run_switchless_tworker_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_sl_run_switchless_tworker_t* ms = SGX_CAST(ms_sl_run_switchless_tworker_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+
+
+
+	ms->ms_retval = sl_run_switchless_tworker();
+
+
 	return status;
 }
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* call_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[7];
+	struct {void* call_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[9];
 } g_ecall_table = {
-	7,
+	9,
 	{
 		{(void*)(uintptr_t)sgx_ecall_get_seal_size, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_gen_key, 0, 0},
@@ -704,48 +682,45 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_decrypt, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_encrypt_aes_ctr, 1, 0},
 		{(void*)(uintptr_t)sgx_ecall_decrypt_aes_ctr, 1, 0},
+		{(void*)(uintptr_t)sgx_sl_init_switchless, 0, 0},
+		{(void*)(uintptr_t)sgx_sl_run_switchless_tworker, 0, 0},
 	}
 };
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[11][7];
+	uint8_t entry_table[11][9];
 } g_dyn_entry_table = {
 	11,
 	{
-		{0, 0, 0, 0, 0, 1, 0, },
-		{0, 0, 0, 0, 0, 0, 1, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 1, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 1, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 
 
-sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path, uint8_t* ctr, size_t ctrLen)
+sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path)
 {
 	sgx_status_t status = SGX_SUCCESS;
 	size_t _len_path = path ? strlen(path) + 1 : 0;
-	size_t _len_ctr = ctrLen;
 
 	ms_ocall_encrypt_file_t* ms = NULL;
 	size_t ocalloc_size = sizeof(ms_ocall_encrypt_file_t);
 	void *__tmp = NULL;
 
-	void *__tmp_ctr = NULL;
 
 	CHECK_ENCLAVE_POINTER(path, _len_path);
-	CHECK_ENCLAVE_POINTER(ctr, _len_ctr);
 
 	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (path != NULL) ? _len_path : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (ctr != NULL) ? _len_ctr : 0))
 		return SGX_ERROR_INVALID_PARAMETER;
 
 	__tmp = sgx_ocalloc(ocalloc_size);
@@ -773,56 +748,27 @@ sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path, uint8_t* ctr, size_t
 		ms->ms_path = NULL;
 	}
 	
-	if (ctr != NULL) {
-		ms->ms_ctr = (uint8_t*)__tmp;
-		__tmp_ctr = __tmp;
-		if (_len_ctr % sizeof(*ctr) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, ctr, _len_ctr)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_ctr);
-		ocalloc_size -= _len_ctr;
-	} else {
-		ms->ms_ctr = NULL;
-	}
-	
-	ms->ms_ctrLen = ctrLen;
 	status = sgx_ocall(0, ms);
 
 	if (status == SGX_SUCCESS) {
-		if (ctr) {
-			if (memcpy_s((void*)ctr, _len_ctr, __tmp_ctr, _len_ctr)) {
-				sgx_ocfree();
-				return SGX_ERROR_UNEXPECTED;
-			}
-		}
 	}
 	sgx_ocfree();
 	return status;
 }
 
-sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path, uint8_t* ctr, size_t ctrLen)
+sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path)
 {
 	sgx_status_t status = SGX_SUCCESS;
 	size_t _len_path = path ? strlen(path) + 1 : 0;
-	size_t _len_ctr = ctrLen;
 
 	ms_ocall_decrypt_file_t* ms = NULL;
 	size_t ocalloc_size = sizeof(ms_ocall_decrypt_file_t);
 	void *__tmp = NULL;
 
-	void *__tmp_ctr = NULL;
 
 	CHECK_ENCLAVE_POINTER(path, _len_path);
-	CHECK_ENCLAVE_POINTER(ctr, _len_ctr);
 
 	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (path != NULL) ? _len_path : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (ctr != NULL) ? _len_ctr : 0))
 		return SGX_ERROR_INVALID_PARAMETER;
 
 	__tmp = sgx_ocalloc(ocalloc_size);
@@ -850,33 +796,9 @@ sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path, uint8_t* ctr, size_t
 		ms->ms_path = NULL;
 	}
 	
-	if (ctr != NULL) {
-		ms->ms_ctr = (uint8_t*)__tmp;
-		__tmp_ctr = __tmp;
-		if (_len_ctr % sizeof(*ctr) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, ctr, _len_ctr)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_ctr);
-		ocalloc_size -= _len_ctr;
-	} else {
-		ms->ms_ctr = NULL;
-	}
-	
-	ms->ms_ctrLen = ctrLen;
 	status = sgx_ocall(1, ms);
 
 	if (status == SGX_SUCCESS) {
-		if (ctr) {
-			if (memcpy_s((void*)ctr, _len_ctr, __tmp_ctr, _len_ctr)) {
-				sgx_ocfree();
-				return SGX_ERROR_UNEXPECTED;
-			}
-		}
 	}
 	sgx_ocfree();
 	return status;

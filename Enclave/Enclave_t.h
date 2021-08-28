@@ -20,11 +20,13 @@ void ecall_gen_key(uint8_t* key, size_t len);
 void ecall_gen_ctr(uint8_t* ctr, size_t len);
 void ecall_encrypt(uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
 void ecall_decrypt(uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
-void ecall_encrypt_aes_ctr(char* plain, size_t lenPlain, uint8_t* count, size_t lenCount, uint8_t* crypt, size_t lenCrypt);
-void ecall_decrypt_aes_ctr(uint8_t* crypt, size_t lenCrypt, uint8_t* count, size_t lenCount, char* plain, size_t lenPlain);
+void ecall_encrypt_aes_ctr(char* plain, size_t lenPlain, uint8_t* crypt, size_t lenCrypt);
+void ecall_decrypt_aes_ctr(uint8_t* crypt, size_t lenCrypt, char* plain, size_t lenPlain);
+sgx_status_t sl_init_switchless(void* sl_data);
+sgx_status_t sl_run_switchless_tworker(void);
 
-sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path, uint8_t* ctr, size_t ctrLen);
-sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path, uint8_t* ctr, size_t ctrLen);
+sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path);
+sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path);
 sgx_status_t SGX_CDECL ocall_printf(const char* str);
 sgx_status_t SGX_CDECL ocall_printf_num(long int num);
 sgx_status_t SGX_CDECL ocall_printf_hex(const uint8_t* num, size_t len);

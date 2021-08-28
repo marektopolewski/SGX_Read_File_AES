@@ -29,6 +29,9 @@
     <ClInclude Include="$(projectname)_t.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="Analyser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="$(projectname).config.xml">

@@ -265,7 +265,7 @@
       <AdditionalIncludeDirectories>$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)sgx_ssl\include;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libsgx_tsgxssl_crypto.lib;libsgx_tsgxssl.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib;sgx_tcxx.lib</AdditionalDependencies>
+      <AdditionalDependencies>sgx_tswitchless.lib;libsgx_tsgxssl_crypto.lib;libsgx_tsgxssl.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib;sgx_tcxx.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SGXSDKInstallPath)sgx_ssl\lib\x64\$(Configuration);$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -442,7 +442,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>
-      <AdditionalDependencies>libsgx_tsgxssl_crypto.lib;libsgx_tsgxssl.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib;sgx_tcxx.lib</AdditionalDependencies>
+      <AdditionalDependencies>sgx_tswitchless.lib;libsgx_tsgxssl_crypto.lib;libsgx_tsgxssl.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib;sgx_tcxx.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SGXSDKInstallPath)sgx_ssl\lib\x64\$(Configuration);$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -460,6 +460,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(projectname)_t.h" />
+    <ClInclude Include="Analyser.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="$(projectname).edl">
@@ -514,7 +515,9 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="$(projectname).config.xml" />
+    <Xml Include="$(projectname).config.xml">
+      <SubType>Designer</SubType>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <None Include="Enclave_private.pem" />

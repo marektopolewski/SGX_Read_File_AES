@@ -37,8 +37,6 @@ typedef struct ms_ecall_decrypt_t {
 typedef struct ms_ecall_encrypt_aes_ctr_t {
 	char* ms_plain;
 	size_t ms_lenPlain;
-	uint8_t* ms_count;
-	size_t ms_lenCount;
 	uint8_t* ms_crypt;
 	size_t ms_lenCrypt;
 } ms_ecall_encrypt_aes_ctr_t;
@@ -46,22 +44,25 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 typedef struct ms_ecall_decrypt_aes_ctr_t {
 	uint8_t* ms_crypt;
 	size_t ms_lenCrypt;
-	uint8_t* ms_count;
-	size_t ms_lenCount;
 	char* ms_plain;
 	size_t ms_lenPlain;
 } ms_ecall_decrypt_aes_ctr_t;
 
+typedef struct ms_sl_init_switchless_t {
+	sgx_status_t ms_retval;
+	void* ms_sl_data;
+} ms_sl_init_switchless_t;
+
+typedef struct ms_sl_run_switchless_tworker_t {
+	sgx_status_t ms_retval;
+} ms_sl_run_switchless_tworker_t;
+
 typedef struct ms_ocall_encrypt_file_t {
 	const char* ms_path;
-	uint8_t* ms_ctr;
-	size_t ms_ctrLen;
 } ms_ocall_encrypt_file_t;
 
 typedef struct ms_ocall_decrypt_file_t {
 	const char* ms_path;
-	uint8_t* ms_ctr;
-	size_t ms_ctrLen;
 } ms_ocall_decrypt_file_t;
 
 typedef struct ms_ocall_printf_t {
@@ -113,7 +114,7 @@ typedef struct ms_u_sgxssl_ftime64_t {
 static sgx_status_t SGX_CDECL Enclave_ocall_encrypt_file(void* pms)
 {
 	ms_ocall_encrypt_file_t* ms = SGX_CAST(ms_ocall_encrypt_file_t*, pms);
-	ocall_encrypt_file(ms->ms_path, ms->ms_ctr, ms->ms_ctrLen);
+	ocall_encrypt_file(ms->ms_path);
 
 	return SGX_SUCCESS;
 }
@@ -121,7 +122,7 @@ static sgx_status_t SGX_CDECL Enclave_ocall_encrypt_file(void* pms)
 static sgx_status_t SGX_CDECL Enclave_ocall_decrypt_file(void* pms)
 {
 	ms_ocall_decrypt_file_t* ms = SGX_CAST(ms_ocall_decrypt_file_t*, pms);
-	ocall_decrypt_file(ms->ms_path, ms->ms_ctr, ms->ms_ctrLen);
+	ocall_decrypt_file(ms->ms_path);
 
 	return SGX_SUCCESS;
 }
@@ -276,31 +277,46 @@ sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLe
 	return status;
 }
 
-sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t lenPlain, uint8_t* count, size_t lenCount, uint8_t* crypt, size_t lenCrypt)
+sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t lenPlain, uint8_t* crypt, size_t lenCrypt)
 {
 	sgx_status_t status;
 	ms_ecall_encrypt_aes_ctr_t ms;
 	ms.ms_plain = plain;
 	ms.ms_lenPlain = lenPlain;
-	ms.ms_count = count;
-	ms.ms_lenCount = lenCount;
 	ms.ms_crypt = crypt;
 	ms.ms_lenCrypt = lenCrypt;
 	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
 	return status;
 }
 
-sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* crypt, size_t lenCrypt, uint8_t* count, size_t lenCount, char* plain, size_t lenPlain)
+sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* crypt, size_t lenCrypt, char* plain, size_t lenPlain)
 {
 	sgx_status_t status;
 	ms_ecall_decrypt_aes_ctr_t ms;
 	ms.ms_crypt = crypt;
 	ms.ms_lenCrypt = lenCrypt;
-	ms.ms_count = count;
-	ms.ms_lenCount = lenCount;
 	ms.ms_plain = plain;
 	ms.ms_lenPlain = lenPlain;
 	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t sl_init_switchless(sgx_enclave_id_t eid, sgx_status_t* retval, void* sl_data)
+{
+	sgx_status_t status;
+	ms_sl_init_switchless_t ms;
+	ms.ms_sl_data = sl_data;
+	status = sgx_ecall(eid, 7, &ocall_table_Enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
+sgx_status_t sl_run_switchless_tworker(sgx_enclave_id_t eid, sgx_status_t* retval)
+{
+	sgx_status_t status;
+	ms_sl_run_switchless_tworker_t ms;
+	status = sgx_ecall(eid, 8, &ocall_table_Enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 

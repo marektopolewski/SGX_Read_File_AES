@@ -3,8 +3,8 @@
 
 #include "Enclave_u.h"
 
-void ocall_encrypt_file(const char * path, uint8_t * ctr, size_t ctrLen);
-void ocall_decrypt_file(const char * path, uint8_t * ctr, size_t ctrLen);
+void ocall_encrypt_file(const char * path);
+void ocall_decrypt_file(const char * path);
 
 void ocall_printf(const char * str);
 void ocall_printf_num(long int num);
