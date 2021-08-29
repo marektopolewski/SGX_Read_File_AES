@@ -9,28 +9,40 @@ enclave
     /* ECALL definitions */
     trusted
 	{
+		/* Encryption setup functions */
 		public void ecall_get_seal_size(size_t orig, [out] size_t * seal);
 		public void ecall_gen_key([out, size=len] uint8_t * key, size_t len);
 		public void ecall_gen_ctr([out, size=len] uint8_t * ctr, size_t len);
 
-		public void ecall_encrypt([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
+		/* Encryption functions */
+		public void ecall_encrypt([in, size=seal_len] uint8_t * seal_key, size_t seal_len,
 								  [in, string] const char * path,
-								  [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
-		public void ecall_decrypt([in, size=sealLen] uint8_t * sealKey, size_t sealLen,
-								  [in, string] const char * path,
-								  [in, out, size=ctrLen] uint8_t * ctr, size_t ctrLen);
+								  [in, out, size=ctr_len] uint8_t * ctr, size_t ctr_len);
+        void ecall_encrypt_aes_ctr([in, size=plain_len] char * plain, size_t plain_len,
+								   [out, size=crypt_len] uint8_t * crypt, size_t crypt_len);
 
-        void ecall_encrypt_aes_ctr([in, size=lenPlain] char * plain, size_t lenPlain,
-								   [out, size=lenCrypt] uint8_t * crypt, size_t lenCrypt);
-        void ecall_decrypt_aes_ctr([in, size=lenCrypt] uint8_t * crypt, size_t lenCrypt,
-								   [out, size=lenPlain] char * plain, size_t lenPlain);
+		/* VCF analysis functions */
+		public void ecall_analysis_set_params([in] int * roi_begin, [in] int * roi_end);
+		public void ecall_analysis_add_file([in, size=seal_len] uint8_t * seal_key, size_t seal_len,
+											[in, string] const char * path,
+											[in, out, size=ctr_len] uint8_t * ctr, size_t ctr_len);
+		public void ecall_analysis_start();
+		void ecall_analysis_flush_output([in] int * flush_all);
+		void ecall_analysis_read_line([in] int * id, [in, size=len_crypt] uint8_t * crypt,
+									  size_t len_crypt, [out] int * pause);
     };
 	
     /* OCALL definitions */
     untrusted
 	{
+		/* Encryption functions */
 		void ocall_encrypt_file([in, string] const char * path) allow(ecall_encrypt_aes_ctr);
-		void ocall_decrypt_file([in, string] const char * path) allow(ecall_decrypt_aes_ctr);
+
+		/* VCF analysis functions */
+		void ocall_analysis_add_file([in, string] const char * path, [out] int * success);
+		void ocall_analysis_start() allow(ecall_analysis_read_line, ecall_analysis_flush_output);
+		void ocall_analysis_flush_output([in, string] const char * output);
+		void ocall_analysis_remove_files();
 
 		/* Debug foos */
 		void ocall_printf([in, string] const char * str);

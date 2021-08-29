@@ -11,15 +11,17 @@ struct Sample;
 
 struct Parameters
 {
-	std::vector<std::string> listOfFiles;
-	double mapQualityThreshold;
-	size_t batchSize;
+	std::string reference_genome;
+	std::vector<std::string> list_of_files;
+	std::pair<int, int> region_of_interest;
+	int map_quality_threshold;
+	bool return_output;
 };
 
 struct Results
 {
 	std::string status;
-	std::vector<Sample> samples;
+	std::string result;
 };
 
 struct Sample

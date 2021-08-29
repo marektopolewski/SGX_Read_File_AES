@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "ErrorSignal.h"
 #include "Server.h"
+#include "OCalls.h"
 
 #include "Enclave_u.h"
 #include "sgx_urts.h"
@@ -42,8 +43,44 @@ int destroy_enclave()
 	return 0;
 }
 
-Results test(Parameters params) 
+void generate_encryption_key(uint8_t * key, size_t seal_len)
 {
+	printf("  Generating the sealed encryption key... ");
+	auto ret = ecall_gen_key(global_eid, key, seal_len);
+	if (ret != SGX_SUCCESS) {
+		ErrorSignal::print_error_message(ret);
+		getchar();
+		throw std::exception("Could not seal AES key");
+	}
+	printf("done.\n");
+}
+
+void generate_init_vector(uint8_t * iv)
+{
+	printf("  Generating the initialisation vector (AES coutner)... ");
+	auto ret = ecall_gen_ctr(global_eid, iv, SGX_AESCTR_CTR_SIZE);
+	if (ret != SGX_SUCCESS) {
+		ErrorSignal::print_error_message(ret);
+		getchar();
+		throw std::exception("Could not generate AES counter");
+	}
+	printf("done.\n");
+}
+
+void add_vcf_file(const std::string & name, uint8_t * key, size_t seal_len, uint8_t * ctr)
+{
+	auto add_status = ecall_analysis_add_file(global_eid, key, seal_len, (name + ".enc").c_str(),
+											  ctr, SGX_AESCTR_CTR_SIZE);
+	if (add_status != SGX_SUCCESS) {
+		ErrorSignal::print_error_message(add_status);
+		getchar();
+		throw std::exception("Could not open a VCF file");
+	}
+}
+
+Results run_gwas(Parameters params) 
+{
+	// Create the enclave
 	if (initialize_enclave() < 0) {
 		printf("Enter a character before exit ...\n");
 		getchar();
@@ -52,34 +89,36 @@ Results test(Parameters params)
 	sgx_status_t ret = SGX_ERROR_UNEXPECTED;
 	printf("Enclave started.\n");
 
-	printf("Sealing encryption key...");
-	size_t sealLen;
-	ret = ecall_get_seal_size(global_eid, SGX_AESCTR_KEY_SIZE, &sealLen);
-	uint8_t * key = (uint8_t *)malloc(sealLen);
-	ecall_gen_key(global_eid, key, sealLen);
+	// Get size of AES key when sealed
+	size_t seal_len;
+	ret = ecall_get_seal_size(global_eid, SGX_AESCTR_KEY_SIZE, &seal_len);
 	if (ret != SGX_SUCCESS) {
 		ErrorSignal::print_error_message(ret);
 		getchar();
-		throw std::exception("Could not seal AES key");
+		throw std::exception("Could not calculate sealed AES key size");
 	}
-	printf("done.\n");
 
-	printf("Generating initialisation vector (AES coutner)... ");
-	uint8_t iv[SGX_AESCTR_CTR_SIZE];
-	uint8_t iv_copy[SGX_AESCTR_CTR_SIZE];
-	ret = ecall_gen_ctr(global_eid, iv, SGX_AESCTR_CTR_SIZE);
-	memcpy(iv_copy, iv, SGX_AESCTR_CTR_SIZE);
-	if (ret != SGX_SUCCESS) {
-		ErrorSignal::print_error_message(ret);
-		getchar();
-		throw std::exception("Could not generate AES counter");
-	}
-	printf("done.\n");
+	// Encrypt input files
+	std::vector<uint8_t *> keys;
+	std::vector<uint8_t *> ivs;
 
 	printf("Encrypting file(s)...\n");
-	for (const auto & file : params.listOfFiles) {
-		printf("\tEncrpyting %s ... ", file.c_str());
-		ret = ecall_encrypt(global_eid, key, sealLen, file.c_str(), iv, SGX_AESCTR_CTR_SIZE);
+	for (const auto & file : params.list_of_files) {
+		printf("\n");
+
+		// Generate AES key and seal it
+		auto key = (uint8_t *)malloc(seal_len);
+		generate_encryption_key(key, seal_len);
+		keys.push_back(key);
+
+		// Generate AES initialisation vector
+		auto iv = (uint8_t *)malloc(SGX_AESCTR_CTR_SIZE);
+		generate_init_vector(iv);
+		ivs.push_back(iv);
+
+		// Encrypt file using generated parameters
+		printf("  Encrpyting file [...]%s ... ", file.substr(file.length() - 60, 60).c_str());
+		ret = ecall_encrypt(global_eid, key, seal_len, file.c_str(), iv, SGX_AESCTR_CTR_SIZE);
 		if (ret != SGX_SUCCESS) {
 			ErrorSignal::print_error_message(ret);
 			getchar();
@@ -87,33 +126,47 @@ Results test(Parameters params)
 		}
 		printf("done.\n");
 	}
-	printf("done.\n");
+	printf("done.\n\n");
 
-	printf("Decrypting and analysing file(s)...\n");
-	for (const auto & file : params.listOfFiles) {
-		auto encFile = file + ".enc";
-		ret = ecall_decrypt(global_eid, key, sealLen, encFile.c_str(), iv_copy, SGX_AESCTR_CTR_SIZE);
-		if (ret != SGX_SUCCESS) {
-			ErrorSignal::print_error_message(ret);
-			getchar();
-			throw std::exception("Could not decrypt data");
-		}
+	// Transfer analysis parameters into the enclave
+	printf("Setting parameters for analysis...\n");
+	ret = ecall_analysis_set_params(global_eid, &params.region_of_interest.first,
+									&params.region_of_interest.second);
+	if (ret != SGX_SUCCESS) {
+		ErrorSignal::print_error_message(ret);
+		getchar();
+		throw std::exception("Could not set analysis parameters");
 	}
-	printf("done.\n");
+	printf("done.\n\n");
 
+	// Open all reuqired files for the analysis
+	printf("Opening VCF file(s) for analysis...\n");
+	for (int it = 0; it < params.list_of_files.size(); ++it) {
+		add_vcf_file(params.list_of_files[it], keys[it], seal_len, ivs[it]);
+	}
+	printf("done.\n\n");
+
+	// Perform the analysis
+	printf("Analysing VCF file(s)...\n");
+	ecall_analysis_start(global_eid);
+	printf("done.\n\n");
+
+	// Destroy the enclave
 	destroy_enclave();
 	printf("Enclave stopped.\n");
 
+	// Read output into memory if required
 	return {
 		"success",
-		{{ "rj123456", 0.77 }, { "gh987654", 0.21 }}
+		params.return_output ? ocall_return_output()
+			: "Results path: \"" + GET_DIRECTORY() + "data/csv/analysis.csv\""
 	};
 }
 
 int SGX_CDECL main(int argc, char *argv[])
 {
 	try {
-		GwasServer server(&test);
+		GwasServer server(&run_gwas);
 		server.open().wait();
 		printf("Press any key to exit\n");
 		getchar();

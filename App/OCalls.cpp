@@ -1,8 +1,7 @@
 #include "OCalls.h"
-
 #include "Constants.h"
 
-#include <assert.h>
+#include <fstream>
 #include <stdio.h>
 #include <string>
 
@@ -36,71 +35,41 @@ void ocall_printf_hex(const uint8_t * num, size_t len)
 	_printf_hex(num, len);
 }
 
-void ocall_encrypt_file(const char * path, const char * encPath)
+void ocall_encrypt_file(const char * path)
 {
 	// Open files
-	FILE * file_to_read;
-	fopen_s(&file_to_read, path, "rb");
-	if (file_to_read == NULL) {
+	std::ifstream file_to_read(GET_DIRECTORY() + path);
+	if (!file_to_read.is_open()) {
 		printf("Fatal error: could not open file - \"%s\"", path);
 		return;
 	}
-	FILE * file_to_write;
-	fopen_s(&file_to_write, encPath, "wb");
-	if (file_to_write == NULL) {
-		printf("Fatal error: could not open file - \"%s\"", encPath);
-		fclose(file_to_read);
+	auto enc_path = std::string(path) + ".enc";
+	std::ofstream file_to_write(GET_DIRECTORY() + enc_path, std::ios::binary);
+	if (!file_to_write.is_open()) {
+		printf("Fatal error: could not open file - \"%s\"", enc_path.c_str());
+		file_to_read.close();
 		return;
 	}
 
 	// Read and encrypt file
 	char read_buffer[READ_BUFFER_SIZE + 1] = "";
+	uint8_t enc_buffer[READ_BUFFER_SIZE] = "";
+	std::string read_line;
 	int inc = 0;
-	while (!feof(file_to_read)) {
-		// Read chunk
-		size_t size_read = fread(read_buffer, sizeof(char), READ_BUFFER_SIZE, file_to_read);
-		read_buffer[size_read] = '\0';
+	while (std::getline(file_to_read, read_line)) {
 
-		// Encrypt chunk
-		uint8_t enc_buffer[READ_BUFFER_SIZE];
-		printf("\t%d: encrypted\n", ++inc);
-		ecall_encrypt_aes_ctr(global_eid, read_buffer, size_read, enc_buffer, size_read);
+		// Encrypt line
+		strcpy_s(read_buffer, READ_BUFFER_SIZE, read_line.c_str());
+		ecall_encrypt_aes_ctr(global_eid, read_buffer, READ_BUFFER_SIZE, enc_buffer, READ_BUFFER_SIZE);
 
 		// Save to disk
-		fwrite(enc_buffer, sizeof(uint8_t), size_read, file_to_write);
+		file_to_write.write((char *)enc_buffer, READ_BUFFER_SIZE);
+
+		memset(read_buffer, 0, READ_BUFFER_SIZE + 1);
+		memset(enc_buffer, 0, READ_BUFFER_SIZE);
 	}
 
 	// Close file and return init vector (counter)
-	fclose(file_to_read);
-	fclose(file_to_write);
-}
-
-
-void ocall_decrypt_file(const char * path)
-{
-	// Open file
-	FILE * file_to_read;
-	fopen_s(&file_to_read, path, "rb");
-	if (file_to_read == NULL) {
-		printf("Fatal error: could not open file - \"%s\"", path);
-		return;
-	}
-
-	uint8_t read_buffer[READ_BUFFER_SIZE] = "";
-	int inc = 0;
-	while (!feof(file_to_read)) {
-		// Read chunk
-		size_t size_read = fread(read_buffer, sizeof(uint8_t), READ_BUFFER_SIZE, file_to_read);
-
-		// Decrypt chunk
-		char dec_buffer[READ_BUFFER_SIZE + 1];
-		ecall_decrypt_aes_ctr(global_eid, read_buffer, size_read, dec_buffer, size_read);
-		dec_buffer[size_read] = '\0';
-
-		// Print to stdout
-		printf("\t%d: %s\n", ++inc, dec_buffer);
-	}
-
-	// Close file
-	fclose(file_to_read);
+	file_to_read.close();
+	file_to_write.close();
 }

@@ -73,7 +73,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>Intel C++ Compiler 2021</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -457,10 +457,15 @@
   <ItemGroup>
     <ClCompile Include="$(projectname).cpp" />
     <ClCompile Include="$(projectname)_t.c" />
+    <ClCompile Include="EnclaveAnalysis.cpp" />
+    <ClCompile Include="EnclaveDecrypt.cpp" />
+    <ClCompile Include="Variant.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(projectname)_t.h" />
-    <ClInclude Include="Analyser.h" />
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="EnclaveDecrypt.h" />
+    <ClInclude Include="Variant.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="$(projectname).edl">

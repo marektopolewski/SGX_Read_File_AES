@@ -18,15 +18,21 @@ extern "C" {
 void ecall_get_seal_size(size_t orig, size_t* seal);
 void ecall_gen_key(uint8_t* key, size_t len);
 void ecall_gen_ctr(uint8_t* ctr, size_t len);
-void ecall_encrypt(uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
-void ecall_decrypt(uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
-void ecall_encrypt_aes_ctr(char* plain, size_t lenPlain, uint8_t* crypt, size_t lenCrypt);
-void ecall_decrypt_aes_ctr(uint8_t* crypt, size_t lenCrypt, char* plain, size_t lenPlain);
+void ecall_encrypt(uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
+void ecall_encrypt_aes_ctr(char* plain, size_t plain_len, uint8_t* crypt, size_t crypt_len);
+void ecall_analysis_set_params(int* roi_begin, int* roi_end);
+void ecall_analysis_add_file(uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
+void ecall_analysis_start(void);
+void ecall_analysis_flush_output(int* flush_all);
+void ecall_analysis_read_line(int* id, uint8_t* crypt, size_t len_crypt, int* pause);
 sgx_status_t sl_init_switchless(void* sl_data);
 sgx_status_t sl_run_switchless_tworker(void);
 
 sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path);
-sgx_status_t SGX_CDECL ocall_decrypt_file(const char* path);
+sgx_status_t SGX_CDECL ocall_analysis_add_file(const char* path, int* success);
+sgx_status_t SGX_CDECL ocall_analysis_start(void);
+sgx_status_t SGX_CDECL ocall_analysis_flush_output(const char* output);
+sgx_status_t SGX_CDECL ocall_analysis_remove_files(void);
 sgx_status_t SGX_CDECL ocall_printf(const char* str);
 sgx_status_t SGX_CDECL ocall_printf_num(long int num);
 sgx_status_t SGX_CDECL ocall_printf_hex(const uint8_t* num, size_t len);

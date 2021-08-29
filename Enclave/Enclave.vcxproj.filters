@@ -24,12 +24,27 @@
     <ClCompile Include="$(projectname).cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Variant.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EnclaveAnalysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EnclaveDecrypt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(projectname)_t.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="Analyser.h">
+    <ClInclude Include="Variant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnclaveDecrypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

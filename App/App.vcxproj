@@ -155,7 +155,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;PROJECT_DIRECTORY="$(SolutionDir).";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\User\Downloads\vcpkg\packages\cpprestsdk_x86-windows\include;$(SGXSDKInstallPath)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -332,6 +332,7 @@
     </ClCompile>
     <ClCompile Include="ErrorSignal.cpp" />
     <ClCompile Include="OCalls.cpp" />
+    <ClCompile Include="OCallsAnalysis.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerFrontEnd.cpp" />
   </ItemGroup>

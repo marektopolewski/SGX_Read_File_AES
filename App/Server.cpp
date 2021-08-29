@@ -70,52 +70,43 @@ void GwasServer::processGwasAnalysis(const HttpRequest & msg)
 	using namespace web::http;
 	auto params = uri::split_query(uri::decode(msg.relative_uri().query()));
 	AsyncTask([this, params, msg]() {
-		/* auto res = analysisCb_({
-			toString(params.at(U("refGen"))),
-			toString(params.at(U("inpGen"))),
-			toString(params.at(U("pheno")))
-		}); */
+
+		// Parse list of files
+		std::vector<std::string> list_of_files;
+		auto files = toString(params.at(U("files")));
+		size_t it_pos = 0, delim_pos = files.find('\r\n');
+		do {
+			list_of_files.push_back(files.substr(it_pos, delim_pos - it_pos));
+			it_pos = delim_pos + 2;
+			delim_pos = files.find('\r\n', it_pos);
+		} while (delim_pos != -1);
+		list_of_files.push_back(files.substr(it_pos, delim_pos - it_pos));
+
+		// Parse remaining arguments
+		auto reference_genome = toString(params.at(U("mapq")));
+		auto region_of_interest = std::make_pair(
+			std::stoi(params.at(U("roi_begin"))),
+			std::stoi(params.at(U("roi_end")))
+		);
+		auto map_quality = std::stoi(params.at(U("mapq")));
+		auto return_output = params.find(U("return")) != params.end();
+
 		auto res = analysisCb_({
-			{
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0002_1_BN_Whole_T3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0004_1_BN_Whole_C4_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0013_1_PB_Whole_C3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0014_1_BN_Whole_T2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0005_1_BN_Whole_T3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0001_1_BN_Whole_C5_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0003_1_BN_Whole_T4_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0002_1_PB_Whole_C5_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0005_1_PB_Whole_C4_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0012_1_BN_Whole_T3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0013_1_BN_Whole_T2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0044_1_PB_Whole_C2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0041_1_PB_Whole_C3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0003_1_PB_Whole_C5_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0002_1_BN_Whole_T4_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0004_1_BN_Whole_T5_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0001_1_BN_Whole_T6_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0006_1_BN_Whole_C3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0007_1_BN_Whole_T2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0008_1_BN_Whole_C3_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0009_1_BN_Whole_T2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0012_1_PB_Whole_C4_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0045_1_BN_Whole_T2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0045_1_BN_Whole_C1_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0044_1_BN_Whole_T1_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0041_1_BN_Whole_T2_KHSC2.bwa.final.chr5.vcf",
-				"C:/Users/User/source/repos/GwasSGX/data/vcf/chr5/HPCI_0042_1_PB_Whole_C1_KHSC2.bwa.final.chr5.vcf"
-			},
-			40,
-			100
+			reference_genome,
+			std::move(list_of_files),
+			std::move(region_of_interest),
+			map_quality,
+			return_output
 		});
 		
 		web::json::value json;
 		for (const auto & param : params)
 			json[U("parameters")][param.first] = web::json::value(param.second);
-		for (size_t i = 0; i < res.samples.size(); ++i) {
+		/* for (size_t i = 0; i < res.samples.size(); ++i) {
 			json[U("result")][i][U("snp")] = web::json::value(toStringT(res.samples[i].snp));
 			json[U("result")][i][U("val")] = web::json::value(res.samples[i].value);
-		}
+		} */
+		json[U("result")] = web::json::value(toStringT(res.result));
 		msg.reply(web::http::status_codes::OK, json);
 	});
 }

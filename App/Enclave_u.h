@@ -19,9 +19,21 @@ extern "C" {
 #define OCALL_ENCRYPT_FILE_DEFINED__
 void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_encrypt_file, (const char* path));
 #endif
-#ifndef OCALL_DECRYPT_FILE_DEFINED__
-#define OCALL_DECRYPT_FILE_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_decrypt_file, (const char* path));
+#ifndef OCALL_ANALYSIS_ADD_FILE_DEFINED__
+#define OCALL_ANALYSIS_ADD_FILE_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_analysis_add_file, (const char* path, int* success));
+#endif
+#ifndef OCALL_ANALYSIS_START_DEFINED__
+#define OCALL_ANALYSIS_START_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_analysis_start, (void));
+#endif
+#ifndef OCALL_ANALYSIS_FLUSH_OUTPUT_DEFINED__
+#define OCALL_ANALYSIS_FLUSH_OUTPUT_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_analysis_flush_output, (const char* output));
+#endif
+#ifndef OCALL_ANALYSIS_REMOVE_FILES_DEFINED__
+#define OCALL_ANALYSIS_REMOVE_FILES_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_analysis_remove_files, (void));
 #endif
 #ifndef OCALL_PRINTF_DEFINED__
 #define OCALL_PRINTF_DEFINED__
@@ -63,10 +75,13 @@ void SGX_UBRIDGE(SGX_NOCONVENTION, u_sgxssl_ftime64, (void* timeptr, uint32_t ti
 sgx_status_t ecall_get_seal_size(sgx_enclave_id_t eid, size_t orig, size_t* seal);
 sgx_status_t ecall_gen_key(sgx_enclave_id_t eid, uint8_t* key, size_t len);
 sgx_status_t ecall_gen_ctr(sgx_enclave_id_t eid, uint8_t* ctr, size_t len);
-sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
-sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, uint8_t* sealKey, size_t sealLen, const char* path, uint8_t* ctr, size_t ctrLen);
-sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t lenPlain, uint8_t* crypt, size_t lenCrypt);
-sgx_status_t ecall_decrypt_aes_ctr(sgx_enclave_id_t eid, uint8_t* crypt, size_t lenCrypt, char* plain, size_t lenPlain);
+sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
+sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t plain_len, uint8_t* crypt, size_t crypt_len);
+sgx_status_t ecall_analysis_set_params(sgx_enclave_id_t eid, int* roi_begin, int* roi_end);
+sgx_status_t ecall_analysis_add_file(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
+sgx_status_t ecall_analysis_start(sgx_enclave_id_t eid);
+sgx_status_t ecall_analysis_flush_output(sgx_enclave_id_t eid, int* flush_all);
+sgx_status_t ecall_analysis_read_line(sgx_enclave_id_t eid, int* id, uint8_t* crypt, size_t len_crypt, int* pause);
 sgx_status_t sl_init_switchless(sgx_enclave_id_t eid, sgx_status_t* retval, void* sl_data);
 sgx_status_t sl_run_switchless_tworker(sgx_enclave_id_t eid, sgx_status_t* retval);
 
