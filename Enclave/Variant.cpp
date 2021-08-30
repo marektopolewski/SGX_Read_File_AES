@@ -1,4 +1,4 @@
-#include "variant.h"
+#include "Variant.h"
 
 VariantEntry::VariantEntry(int pos, const std::string & variant)
 	: pos(pos)

@@ -1,5 +1,5 @@
-#ifndef VARIANT_HPP
-#define VARIANT_HPP
+#ifndef VARIANT_H
+#define VARIANT_H
 
 #include <string>
 
@@ -15,4 +15,4 @@ struct VariantEntryComparator
 	bool operator()(const VariantEntry & lhs, const VariantEntry & rhs) const;
 };
 
-#endif // VARIANT_HPP
+#endif // VARIANT_H

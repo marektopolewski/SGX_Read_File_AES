@@ -38,13 +38,13 @@ void ocall_printf_hex(const uint8_t * num, size_t len)
 void ocall_encrypt_file(const char * path)
 {
 	// Open files
-	std::ifstream file_to_read(GET_DIRECTORY() + path);
+	std::ifstream file_to_read(GET_DATA_DIR() + path);
 	if (!file_to_read.is_open()) {
 		printf("Fatal error: could not open file - \"%s\"", path);
 		return;
 	}
 	auto enc_path = std::string(path) + ".enc";
-	std::ofstream file_to_write(GET_DIRECTORY() + enc_path, std::ios::binary);
+	std::ofstream file_to_write(GET_DATA_DIR() + enc_path, std::ios::binary);
 	if (!file_to_write.is_open()) {
 		printf("Fatal error: could not open file - \"%s\"", enc_path.c_str());
 		file_to_read.close();

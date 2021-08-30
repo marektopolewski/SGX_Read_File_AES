@@ -13,11 +13,11 @@ struct VcfFileHandle
 };
 static std::vector<VcfFileHandle> vcf_files;
 
-static const char * output_path = "data/csv/analysis.csv";
+static const char * output_path = "csv/analysis.csv";
 static std::fstream * analysis_file;
 void ocall_analysis_add_file(const char * path, int * success)
 {
-	auto vcf_file = new std::ifstream(GET_DIRECTORY() + path, std::ios::binary);
+	auto vcf_file = new std::ifstream(GET_DATA_DIR() + path, std::ios::binary);
 	if (!vcf_file->is_open()) {
 		printf("Fatal error: could not open file - \"%s\"", path);
 		*success = 1;
@@ -29,7 +29,7 @@ void ocall_analysis_add_file(const char * path, int * success)
 void ocall_analysis_start()
 {
 	bool outputUpdated = true;
-	analysis_file = new std::fstream(GET_DIRECTORY() + output_path);
+	analysis_file = new std::fstream(GET_DATA_DIR() + output_path);
 	if (!analysis_file->is_open()) {
 		printf("Fatal error: could not open the output file - \"%s\"", output_path);
 		return;
@@ -97,7 +97,7 @@ void ocall_analysis_remove_files()
 
 std::string ocall_return_output()
 {
-	analysis_file->open(GET_DIRECTORY() + output_path);
+	analysis_file->open(GET_DATA_DIR() + output_path);
 	if (!analysis_file->is_open())
 		return "Could not read the output file";
 

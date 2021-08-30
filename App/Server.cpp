@@ -83,7 +83,7 @@ void GwasServer::processGwasAnalysis(const HttpRequest & msg)
 		list_of_files.push_back(files.substr(it_pos, delim_pos - it_pos));
 
 		// Parse remaining arguments
-		auto reference_genome = toString(params.at(U("mapq")));
+		auto reference_genome = toString(params.at(U("refGen")));
 		auto region_of_interest = std::make_pair(
 			std::stoi(params.at(U("roi_begin"))),
 			std::stoi(params.at(U("roi_end")))

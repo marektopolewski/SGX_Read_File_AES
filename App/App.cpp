@@ -45,26 +45,22 @@ int destroy_enclave()
 
 void generate_encryption_key(uint8_t * key, size_t seal_len)
 {
-	printf("  Generating the sealed encryption key... ");
 	auto ret = ecall_gen_key(global_eid, key, seal_len);
 	if (ret != SGX_SUCCESS) {
 		ErrorSignal::print_error_message(ret);
 		getchar();
 		throw std::exception("Could not seal AES key");
 	}
-	printf("done.\n");
 }
 
 void generate_init_vector(uint8_t * iv)
 {
-	printf("  Generating the initialisation vector (AES coutner)... ");
 	auto ret = ecall_gen_ctr(global_eid, iv, SGX_AESCTR_CTR_SIZE);
 	if (ret != SGX_SUCCESS) {
 		ErrorSignal::print_error_message(ret);
 		getchar();
 		throw std::exception("Could not generate AES counter");
 	}
-	printf("done.\n");
 }
 
 void add_vcf_file(const std::string & name, uint8_t * key, size_t seal_len, uint8_t * ctr)
@@ -98,13 +94,27 @@ Results run_gwas(Parameters params)
 		throw std::exception("Could not calculate sealed AES key size");
 	}
 
+	///////////////////////////////////// SAM //////////////////////////////////////////
+	
+	// Call variants on each SAM file against the reference FASTA file
+	printf("Calling variants on SAM file(s)...\n");
+	ocalls_sequence_set_ref_file(params.reference_genome.c_str());
+	for (const auto & sam_path : params.list_of_files) {
+		printf("  Calling %s ...", sam_path.c_str());
+		ocalls_sequence_call_sam_file(sam_path.c_str(), &params.map_quality_threshold);
+		printf("done.\n");
+	}
+	printf("done.\n\n");
+
 	// Encrypt input files
+	printf("Encrypting VCF file(s)...\n");
 	std::vector<uint8_t *> keys;
 	std::vector<uint8_t *> ivs;
 
-	printf("Encrypting file(s)...\n");
-	for (const auto & file : params.list_of_files) {
-		printf("\n");
+	for (const auto & sam_path : params.list_of_files) {
+
+		auto vcf_path = MAKE_SUB_PATH(sam_path.c_str(), "vcf");
+		printf("  Encrpyting %s ... ", vcf_path.c_str());
 
 		// Generate AES key and seal it
 		auto key = (uint8_t *)malloc(seal_len);
@@ -117,8 +127,7 @@ Results run_gwas(Parameters params)
 		ivs.push_back(iv);
 
 		// Encrypt file using generated parameters
-		printf("  Encrpyting file [...]%s ... ", file.substr(file.length() - 60, 60).c_str());
-		ret = ecall_encrypt(global_eid, key, seal_len, file.c_str(), iv, SGX_AESCTR_CTR_SIZE);
+		ret = ecall_encrypt(global_eid, key, seal_len, vcf_path.c_str(), iv, SGX_AESCTR_CTR_SIZE);
 		if (ret != SGX_SUCCESS) {
 			ErrorSignal::print_error_message(ret);
 			getchar();
@@ -127,6 +136,9 @@ Results run_gwas(Parameters params)
 		printf("done.\n");
 	}
 	printf("done.\n\n");
+
+
+	///////////////////////////////////// VCF //////////////////////////////////////////
 
 	// Transfer analysis parameters into the enclave
 	printf("Setting parameters for analysis...\n");
@@ -142,7 +154,7 @@ Results run_gwas(Parameters params)
 	// Open all reuqired files for the analysis
 	printf("Opening VCF file(s) for analysis...\n");
 	for (int it = 0; it < params.list_of_files.size(); ++it) {
-		add_vcf_file(params.list_of_files[it], keys[it], seal_len, ivs[it]);
+		add_vcf_file(MAKE_SUB_PATH(params.list_of_files[it].c_str(), "vcf"), keys[it], seal_len, ivs[it]);
 	}
 	printf("done.\n\n");
 
@@ -159,7 +171,7 @@ Results run_gwas(Parameters params)
 	return {
 		"success",
 		params.return_output ? ocall_return_output()
-			: "Results path: \"" + GET_DIRECTORY() + "data/csv/analysis.csv\""
+			: "Results path: \"" + GET_DATA_DIR() + "data/csv/analysis.csv\""
 	};
 }
 

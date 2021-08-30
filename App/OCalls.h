@@ -8,6 +8,9 @@
 void ocall_encrypt_file(const char * path);
 void ocall_decrypt_file(const char * path);
 
+void ocalls_sequence_set_ref_file(const char * path);
+void ocalls_sequence_call_sam_file(const char * path, int * mapq);
+
 void ocall_analysis_add_file(const char * path, int * success);
 void ocall_analysis_start();
 void ocall_analysis_flush_output(const char * output);
