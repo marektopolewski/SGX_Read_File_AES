@@ -42,13 +42,7 @@
     <ClCompile Include="OCallsSequence.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SequenceHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ReferenceHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VariantHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,9 +68,6 @@
     <ClInclude Include="ServerFrontEnd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SequenceHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FileHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,9 +75,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ReferenceHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VariantHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

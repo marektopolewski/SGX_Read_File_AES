@@ -334,11 +334,9 @@
     <ClCompile Include="OCalls.cpp" />
     <ClCompile Include="OCallsAnalysis.cpp" />
     <ClCompile Include="ReferenceHandler.cpp" />
-    <ClCompile Include="SequenceHandler.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerFrontEnd.cpp" />
     <ClCompile Include="OCallsSequence.cpp" />
-    <ClCompile Include="VariantHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -349,10 +347,8 @@
     <ClInclude Include="FileHandler.h" />
     <ClInclude Include="OCalls.h" />
     <ClInclude Include="ReferenceHandler.h" />
-    <ClInclude Include="SequenceHandler.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="ServerFrontEnd.h" />
-    <ClInclude Include="VariantHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\Enclave\Enclave.edl">

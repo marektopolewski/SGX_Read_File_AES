@@ -459,10 +459,12 @@
     <ClCompile Include="$(projectname)_t.c" />
     <ClCompile Include="EnclaveAnalysis.cpp" />
     <ClCompile Include="EnclaveDecrypt.cpp" />
+    <ClCompile Include="EnclaveVarcall.cpp" />
     <ClCompile Include="Variant.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(projectname)_t.h" />
+    <ClInclude Include="Cigar.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="EnclaveDecrypt.h" />
     <ClInclude Include="Variant.h" />

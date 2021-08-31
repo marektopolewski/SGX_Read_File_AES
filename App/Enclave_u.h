@@ -19,6 +19,14 @@ extern "C" {
 #define OCALL_ENCRYPT_FILE_DEFINED__
 void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_encrypt_file, (const char* path));
 #endif
+#ifndef OCALL_VARCALL_CALL_SAM_FILE_DEFINED__
+#define OCALL_VARCALL_CALL_SAM_FILE_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_varcall_call_sam_file, (const char* path, int* mapq));
+#endif
+#ifndef OCALL_VARCALL_FLUSH_OUTPUT_DEFINED__
+#define OCALL_VARCALL_FLUSH_OUTPUT_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_varcall_flush_output, (const char* output));
+#endif
 #ifndef OCALL_ANALYSIS_ADD_FILE_DEFINED__
 #define OCALL_ANALYSIS_ADD_FILE_DEFINED__
 void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_analysis_add_file, (const char* path, int* success));
@@ -77,6 +85,10 @@ sgx_status_t ecall_gen_key(sgx_enclave_id_t eid, uint8_t* key, size_t len);
 sgx_status_t ecall_gen_ctr(sgx_enclave_id_t eid, uint8_t* ctr, size_t len);
 sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
 sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t plain_len, uint8_t* crypt, size_t crypt_len);
+sgx_status_t ecall_varcall_load_metadata(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, uint8_t* ctr, size_t ctr_len);
+sgx_status_t ecall_varcall_get_pos(sgx_enclave_id_t eid, uint8_t* crypt, size_t crypt_len, int* mapq, int* pos, int* ignore);
+sgx_status_t ecall_varcall_find_mutations(sgx_enclave_id_t eid, const char* prefix, const char* ref_seq);
+sgx_status_t ecall_varcall_flush_output(sgx_enclave_id_t eid, int* flush_all);
 sgx_status_t ecall_analysis_set_params(sgx_enclave_id_t eid, int* roi_begin, int* roi_end);
 sgx_status_t ecall_analysis_add_file(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
 sgx_status_t ecall_analysis_start(sgx_enclave_id_t eid);

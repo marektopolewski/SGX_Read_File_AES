@@ -14,7 +14,8 @@ struct VcfFileHandle
 static std::vector<VcfFileHandle> vcf_files;
 
 static const char * output_path = "csv/analysis.csv";
-static std::fstream * analysis_file;
+static std::ofstream * analysis_file;
+
 void ocall_analysis_add_file(const char * path, int * success)
 {
 	auto vcf_file = new std::ifstream(GET_DATA_DIR() + path, std::ios::binary);
@@ -29,7 +30,7 @@ void ocall_analysis_add_file(const char * path, int * success)
 void ocall_analysis_start()
 {
 	bool outputUpdated = true;
-	analysis_file = new std::fstream(GET_DATA_DIR() + output_path);
+	analysis_file = new std::ofstream(GET_DATA_DIR() + output_path);
 	if (!analysis_file->is_open()) {
 		printf("Fatal error: could not open the output file - \"%s\"", output_path);
 		return;
@@ -53,23 +54,23 @@ void ocall_analysis_start()
 			}
 
 			// Read and analyse a batch of a file
-			char read_buffer[READ_BUFFER_SIZE] = "";
+			char read_buffer[READ_BUFFER_SIZE_S] = "";
 			int batch_it = 0;
 			while (batch_it < READ_BATCH_SIZE) {
 
 				// Read a line (each is READ_BUFFER_SIZE bytes long)
-				if (!vcf_file.handle->read(read_buffer, READ_BUFFER_SIZE)) {
+				if (!vcf_file.handle->read(read_buffer, READ_BUFFER_SIZE_S)) {
 					vcf_file.done = true;
 					break;
 				}
 
 				// Decrypt and analyse the line
-				int pause_requested = 0;
-				ecall_analysis_read_line(global_eid, &it, (uint8_t *)read_buffer, READ_BUFFER_SIZE, &pause_requested);
-				memset(read_buffer, 0, READ_BUFFER_SIZE);
+				int pause = 0;
+				ecall_analysis_read_line(global_eid, &it, (uint8_t *)read_buffer, READ_BUFFER_SIZE_S, &pause);
+				memset(read_buffer, 0, READ_BUFFER_SIZE_S);
 
 				// Pause reading current file if too far ahead of global position
-				if (pause_requested == 1)
+				if (pause == 1)
 					break;
 				++batch_it;
 			}
@@ -97,15 +98,15 @@ void ocall_analysis_remove_files()
 
 std::string ocall_return_output()
 {
-	analysis_file->open(GET_DATA_DIR() + output_path);
-	if (!analysis_file->is_open())
+	std::ifstream output_file(GET_DATA_DIR() + output_path);
+	if (!output_file.is_open())
 		return "Could not read the output file";
 
 	std::string return_output;
-	analysis_file->seekg(0, std::ios::end);
-	return_output.reserve(analysis_file->tellg());
-	analysis_file->seekg(0, std::ios::beg);
-	return_output.assign(std::istreambuf_iterator<char>(*analysis_file),
-		std::istreambuf_iterator<char>());
+	output_file.seekg(0, std::ios::end);
+	return_output.reserve(output_file.tellg());
+	output_file.seekg(0, std::ios::beg);
+	return_output.assign(std::istreambuf_iterator<char>(output_file),
+						 std::istreambuf_iterator<char>());
 	return return_output;
 }

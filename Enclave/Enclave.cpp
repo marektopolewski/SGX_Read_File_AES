@@ -10,7 +10,6 @@
 #include <memory>
 #include <stdlib.h>
 
-
 static uint8_t unsealedKey[SGX_AESCTR_KEY_SIZE] = { 0 };
 static uint8_t counterIv[COUNTER_BLOCK_SIZE] = { 0 };
 

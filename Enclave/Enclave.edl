@@ -20,6 +20,16 @@ enclave
 								  [in, out, size=ctr_len] uint8_t * ctr, size_t ctr_len);
         void ecall_encrypt_aes_ctr([in, size=plain_len] char * plain, size_t plain_len,
 								   [out, size=crypt_len] uint8_t * crypt, size_t crypt_len);
+								   
+		/* SAM variant calling functions */
+		public void ecall_varcall_load_metadata([in, size=seal_len] uint8_t * seal_key, size_t seal_len,
+												[in, out, size=ctr_len] uint8_t * ctr, size_t ctr_len);
+		public void ecall_varcall_get_pos([in, size=crypt_len] uint8_t * crypt, size_t crypt_len,
+										  [in] int * mapq, [out] int * pos, [out] int * ignore);
+		public void ecall_varcall_find_mutations([in, string] const char * prefix,
+												 [in, string] const char * ref_seq);
+		public void ecall_varcall_flush_output([in] int * flush_all);
+ 
 
 		/* VCF analysis functions */
 		public void ecall_analysis_set_params([in] int * roi_begin, [in] int * roi_end);
@@ -37,6 +47,10 @@ enclave
 	{
 		/* Encryption functions */
 		void ocall_encrypt_file([in, string] const char * path) allow(ecall_encrypt_aes_ctr);
+
+		/* SAM variant calling functions */
+		void ocall_varcall_call_sam_file([in, string] const char * path, [in] int * mapq) allow(ecall_encrypt_aes_ctr);
+		void ocall_varcall_flush_output([in, string] const char * output);
 
 		/* VCF analysis functions */
 		void ocall_analysis_add_file([in, string] const char * path, [out] int * success);

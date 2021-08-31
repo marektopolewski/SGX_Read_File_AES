@@ -95,22 +95,58 @@ Results run_gwas(Parameters params)
 	}
 
 	///////////////////////////////////// SAM //////////////////////////////////////////
-	
-	// Call variants on each SAM file against the reference FASTA file
-	printf("Calling variants on SAM file(s)...\n");
-	ocalls_sequence_set_ref_file(params.reference_genome.c_str());
-	for (const auto & sam_path : params.list_of_files) {
-		printf("  Calling %s ...", sam_path.c_str());
-		ocalls_sequence_call_sam_file(sam_path.c_str(), &params.map_quality_threshold);
+
+	// Encrypt SAM files
+	printf("Encrypting SAM file(s)...\n");
+	std::vector<uint8_t *> keys;
+	std::vector<uint8_t *> ivs;
+	/*for (const auto & sam_path : params.list_of_files) {
+
+		printf("  Encrpyting %s ... ", sam_path.c_str());
+
+		// Generate AES key and seal it
+		auto key = (uint8_t *)malloc(seal_len);
+		generate_encryption_key(key, seal_len);
+		keys.push_back(key);
+
+		// Generate AES initialisation vector
+		auto iv = (uint8_t *)malloc(SGX_AESCTR_CTR_SIZE);
+		generate_init_vector(iv);
+		ivs.push_back(iv);
+
+		// Encrypt file using generated parameters
+		ret = ecall_encrypt(global_eid, key, seal_len, sam_path.c_str(), iv, SGX_AESCTR_CTR_SIZE);
+		if (ret != SGX_SUCCESS) {
+			ErrorSignal::print_error_message(ret);
+			getchar();
+			throw std::exception("Could not encrypt data");
+		}
 		printf("done.\n");
 	}
 	printf("done.\n\n");
 
-	// Encrypt input files
-	printf("Encrypting VCF file(s)...\n");
-	std::vector<uint8_t *> keys;
-	std::vector<uint8_t *> ivs;
+	// Call variants on each SAM file against the reference FASTA file
+	printf("Calling variants on SAM file(s)...\n");
+	ocall_varcall_set_ref_file(params.reference_genome.c_str());
+	for (int it = 0; it < params.list_of_files.size(); ++it) {
+		printf("  Calling %s ...", params.list_of_files[it].c_str());
+		ecall_varcall_load_metadata(global_eid, keys[it], seal_len, ivs[it], SGX_AESCTR_CTR_SIZE);
+		ocall_varcall_call_sam_file(params.list_of_files[it].c_str(), &params.map_quality_threshold);
+		printf("done.\n");
+	}
+	printf("done.\n\n");
 
+	*/
+
+	///////////////////////////////////// TODO ////////////////////////////////////////////////
+	//
+	// VCF files should be written to disk encrypted instead in plaintext and then encrypted.
+	//
+	///////////////////////////////////// TODO ////////////////////////////////////////////////
+
+	printf("Encrypting VCF file(s)...\n");
+	keys.clear();
+	ivs.clear();
 	for (const auto & sam_path : params.list_of_files) {
 
 		auto vcf_path = MAKE_SUB_PATH(sam_path.c_str(), "vcf");

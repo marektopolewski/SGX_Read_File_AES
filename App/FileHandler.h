@@ -7,7 +7,8 @@
 class InFileHandler
 {
 public:
-	InFileHandler(const std::string & path) : m_file(path) {}
+	InFileHandler(const std::string & path, bool binary = false)
+		: m_file(path, binary ? std::ios::binary|std::ios::out : std::ios::in) {}
 	~InFileHandler() { m_file.close(); }
 	bool valid() { return m_file.is_open(); }
 
@@ -18,7 +19,8 @@ protected:
 class OutFileHandler
 {
 public:
-	OutFileHandler(const std::string & path) : m_file(path) {}
+	OutFileHandler(const std::string & path, bool binary = false)
+		: m_file(path, binary ? std::ios::binary|std::ios::out : std::ios::out) {}
 	~OutFileHandler() { m_file.close(); }
 	bool valid() { return m_file.is_open(); }
 

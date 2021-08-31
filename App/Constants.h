@@ -28,23 +28,18 @@ static std::string GET_DATA_DIR() {
 
 static std::string MAKE_SUB_PATH(const char * sam_path, const char * sub)
 {
-	return sub + std::string(sam_path).substr(strlen(sub), strlen(sam_path) - strlen(sub) * 2) + sub;
+	return sub + std::string(sam_path).substr(strlen(sub),
+		strlen(sam_path) - strlen(sub) * 2) + sub;
 }
 
 /* SAM and FASTA CONSTANTS */
 #define SEQ_READ_SIZE 82
-
-#define SAM_COLUMN_POSITION 3
-#define SAM_COLUMN_MAPQ     4
-#define SAM_COLUMN_CIGAR    5
-#define SAM_COLUMN_SEQUENCE 9
-
 #define WILDCARD_NUCLEOTIDE 'N'
 
-#define VARIANT_BATCH_SIZE 100
-
 /* VCF CONSTANTS */
-#define READ_BUFFER_SIZE 25
+#define MAX_BUFFER_SIZE 31
+#define READ_BUFFER_SIZE_L 400
+#define READ_BUFFER_SIZE_S 45
 #define READ_BATCH_SIZE 50
 
 #endif // CONSTANTS_H_

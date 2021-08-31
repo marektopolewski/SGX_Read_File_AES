@@ -33,6 +33,9 @@
     <ClCompile Include="EnclaveDecrypt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EnclaveVarcall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(projectname)_t.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EnclaveDecrypt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cigar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

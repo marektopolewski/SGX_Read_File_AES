@@ -32,6 +32,32 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 	size_t ms_crypt_len;
 } ms_ecall_encrypt_aes_ctr_t;
 
+typedef struct ms_ecall_varcall_load_metadata_t {
+	uint8_t* ms_seal_key;
+	size_t ms_seal_len;
+	uint8_t* ms_ctr;
+	size_t ms_ctr_len;
+} ms_ecall_varcall_load_metadata_t;
+
+typedef struct ms_ecall_varcall_get_pos_t {
+	uint8_t* ms_crypt;
+	size_t ms_crypt_len;
+	int* ms_mapq;
+	int* ms_pos;
+	int* ms_ignore;
+} ms_ecall_varcall_get_pos_t;
+
+typedef struct ms_ecall_varcall_find_mutations_t {
+	const char* ms_prefix;
+	size_t ms_prefix_len;
+	const char* ms_ref_seq;
+	size_t ms_ref_seq_len;
+} ms_ecall_varcall_find_mutations_t;
+
+typedef struct ms_ecall_varcall_flush_output_t {
+	int* ms_flush_all;
+} ms_ecall_varcall_flush_output_t;
+
 typedef struct ms_ecall_analysis_set_params_t {
 	int* ms_roi_begin;
 	int* ms_roi_end;
@@ -69,6 +95,15 @@ typedef struct ms_sl_run_switchless_tworker_t {
 typedef struct ms_ocall_encrypt_file_t {
 	const char* ms_path;
 } ms_ocall_encrypt_file_t;
+
+typedef struct ms_ocall_varcall_call_sam_file_t {
+	const char* ms_path;
+	int* ms_mapq;
+} ms_ocall_varcall_call_sam_file_t;
+
+typedef struct ms_ocall_varcall_flush_output_t {
+	const char* ms_output;
+} ms_ocall_varcall_flush_output_t;
 
 typedef struct ms_ocall_analysis_add_file_t {
 	const char* ms_path;
@@ -129,6 +164,22 @@ static sgx_status_t SGX_CDECL Enclave_ocall_encrypt_file(void* pms)
 {
 	ms_ocall_encrypt_file_t* ms = SGX_CAST(ms_ocall_encrypt_file_t*, pms);
 	ocall_encrypt_file(ms->ms_path);
+
+	return SGX_SUCCESS;
+}
+
+static sgx_status_t SGX_CDECL Enclave_ocall_varcall_call_sam_file(void* pms)
+{
+	ms_ocall_varcall_call_sam_file_t* ms = SGX_CAST(ms_ocall_varcall_call_sam_file_t*, pms);
+	ocall_varcall_call_sam_file(ms->ms_path, ms->ms_mapq);
+
+	return SGX_SUCCESS;
+}
+
+static sgx_status_t SGX_CDECL Enclave_ocall_varcall_flush_output(void* pms)
+{
+	ms_ocall_varcall_flush_output_t* ms = SGX_CAST(ms_ocall_varcall_flush_output_t*, pms);
+	ocall_varcall_flush_output(ms->ms_output);
 
 	return SGX_SUCCESS;
 }
@@ -237,11 +288,13 @@ static sgx_status_t SGX_CDECL Enclave_u_sgxssl_ftime64(void* pms)
 
 static const struct {
 	size_t nr_ocall;
-	void * func_addr[14];
+	void * func_addr[16];
 } ocall_table_Enclave = {
-	14,
+	16,
 	{
 		(void*)(uintptr_t)Enclave_ocall_encrypt_file,
+		(void*)(uintptr_t)Enclave_ocall_varcall_call_sam_file,
+		(void*)(uintptr_t)Enclave_ocall_varcall_flush_output,
 		(void*)(uintptr_t)Enclave_ocall_analysis_add_file,
 		(void*)(uintptr_t)Enclave_ocall_analysis_start,
 		(void*)(uintptr_t)Enclave_ocall_analysis_flush_output,
@@ -314,13 +367,59 @@ sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t pla
 	return status;
 }
 
+sgx_status_t ecall_varcall_load_metadata(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, uint8_t* ctr, size_t ctr_len)
+{
+	sgx_status_t status;
+	ms_ecall_varcall_load_metadata_t ms;
+	ms.ms_seal_key = seal_key;
+	ms.ms_seal_len = seal_len;
+	ms.ms_ctr = ctr;
+	ms.ms_ctr_len = ctr_len;
+	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_varcall_get_pos(sgx_enclave_id_t eid, uint8_t* crypt, size_t crypt_len, int* mapq, int* pos, int* ignore)
+{
+	sgx_status_t status;
+	ms_ecall_varcall_get_pos_t ms;
+	ms.ms_crypt = crypt;
+	ms.ms_crypt_len = crypt_len;
+	ms.ms_mapq = mapq;
+	ms.ms_pos = pos;
+	ms.ms_ignore = ignore;
+	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_varcall_find_mutations(sgx_enclave_id_t eid, const char* prefix, const char* ref_seq)
+{
+	sgx_status_t status;
+	ms_ecall_varcall_find_mutations_t ms;
+	ms.ms_prefix = prefix;
+	ms.ms_prefix_len = prefix ? strlen(prefix) + 1 : 0;
+	ms.ms_ref_seq = ref_seq;
+	ms.ms_ref_seq_len = ref_seq ? strlen(ref_seq) + 1 : 0;
+	status = sgx_ecall(eid, 7, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_varcall_flush_output(sgx_enclave_id_t eid, int* flush_all)
+{
+	sgx_status_t status;
+	ms_ecall_varcall_flush_output_t ms;
+	ms.ms_flush_all = flush_all;
+	status = sgx_ecall(eid, 8, &ocall_table_Enclave, &ms);
+	return status;
+}
+
 sgx_status_t ecall_analysis_set_params(sgx_enclave_id_t eid, int* roi_begin, int* roi_end)
 {
 	sgx_status_t status;
 	ms_ecall_analysis_set_params_t ms;
 	ms.ms_roi_begin = roi_begin;
 	ms.ms_roi_end = roi_end;
-	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 9, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -334,14 +433,14 @@ sgx_status_t ecall_analysis_add_file(sgx_enclave_id_t eid, uint8_t* seal_key, si
 	ms.ms_path_len = path ? strlen(path) + 1 : 0;
 	ms.ms_ctr = ctr;
 	ms.ms_ctr_len = ctr_len;
-	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 10, &ocall_table_Enclave, &ms);
 	return status;
 }
 
 sgx_status_t ecall_analysis_start(sgx_enclave_id_t eid)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 7, &ocall_table_Enclave, NULL);
+	status = sgx_ecall(eid, 11, &ocall_table_Enclave, NULL);
 	return status;
 }
 
@@ -350,7 +449,7 @@ sgx_status_t ecall_analysis_flush_output(sgx_enclave_id_t eid, int* flush_all)
 	sgx_status_t status;
 	ms_ecall_analysis_flush_output_t ms;
 	ms.ms_flush_all = flush_all;
-	status = sgx_ecall(eid, 8, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 12, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -362,7 +461,7 @@ sgx_status_t ecall_analysis_read_line(sgx_enclave_id_t eid, int* id, uint8_t* cr
 	ms.ms_crypt = crypt;
 	ms.ms_len_crypt = len_crypt;
 	ms.ms_pause = pause;
-	status = sgx_ecall(eid, 9, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 13, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -371,7 +470,7 @@ sgx_status_t sl_init_switchless(sgx_enclave_id_t eid, sgx_status_t* retval, void
 	sgx_status_t status;
 	ms_sl_init_switchless_t ms;
 	ms.ms_sl_data = sl_data;
-	status = sgx_ecall(eid, 10, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 14, &ocall_table_Enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
@@ -380,7 +479,7 @@ sgx_status_t sl_run_switchless_tworker(sgx_enclave_id_t eid, sgx_status_t* retva
 {
 	sgx_status_t status;
 	ms_sl_run_switchless_tworker_t ms;
-	status = sgx_ecall(eid, 11, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 15, &ocall_table_Enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }

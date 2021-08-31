@@ -26,6 +26,7 @@ static int map_quality_threshold = 0;
 static int min_genome_position = INT_MAX;
 static std::map<VariantEntry, size_t, VariantEntryComparator> variant_counts;
 
+
 void ecall_analysis_set_params(int * roi_begin, int * roi_end)
 {
 	region_of_interest_begin = *roi_begin;
@@ -33,22 +34,24 @@ void ecall_analysis_set_params(int * roi_begin, int * roi_end)
 }
 
 void ecall_analysis_add_file(uint8_t * seal_key, size_t seal_len,
-	const char * path,
-	uint8_t * ctr, size_t ctr_len)
+							 const char * path,
+							 uint8_t * ctr, size_t ctr_len)
 {
 	assert(SGX_AESCTR_KEY_SIZE + sizeof(sgx_sealed_data_t) == seal_len);
 	assert(COUNTER_BLOCK_SIZE == ctr_len);
 
+	// Add counter iv to the map
 	file_metadata.push_back({});
 	memcpy(file_metadata.back().ctr, ctr, COUNTER_BLOCK_SIZE);
 
+	// Add unsealed key to the map
 	uint32_t keyLen = SGX_AESCTR_KEY_SIZE;
 	auto seal_status = sgx_unseal_data((sgx_sealed_data_t *)seal_key, NULL, NULL, file_metadata.back().key, &keyLen);
 	assert(seal_status == SGX_SUCCESS);
 
+	// Open file outside the enclave
 	int open_status = 0;
 	ocall_analysis_add_file(path, &open_status);
-	assert(open_status == 0);
 }
 
 void ecall_analysis_start()
@@ -59,14 +62,11 @@ void ecall_analysis_start()
 
 void ecall_analysis_flush_output(int * flush_all)
 {
-	if (*flush_all == 1)
-		min_genome_position = INT_MAX;
-
 	std::string output = "";
 	auto it = variant_counts.begin();
 	for (; it != variant_counts.end(); ++it) {
 		// Stop if reached a position that may overlap
-		if (it->first.pos >= min_genome_position)
+		if (it->first.pos >= min_genome_position && *flush_all != 1)
 			break;
 
 		// Extend the string to flush
@@ -75,7 +75,7 @@ void ecall_analysis_flush_output(int * flush_all)
 		output += it->first.variant;
 		output += ",";
 		output += std::to_string(it->second);
-		output += "\r\n";
+		output += "\n";
 
 		// Flush string early if too large
 		if (output.length() > MAX_FLUSH_STRING_SIZE) {
@@ -91,17 +91,24 @@ void ecall_analysis_flush_output(int * flush_all)
 	ocall_analysis_flush_output(output.c_str());
 }
 
-void ecall_analysis_read_line(int * id, uint8_t * cryptMessage, size_t crypt_len, int * pause)
+void ecall_analysis_read_line(int * id, uint8_t * crypt, size_t crypt_len, int * pause)
 {
 	// Decrypt line
-	auto plainMessage = (char *)malloc(crypt_len + 1);
-	ecall_decrypt_aes_ctr(file_metadata[*id].key, file_metadata[*id].ctr,
-						  cryptMessage, crypt_len, plainMessage, crypt_len);
+	char plain[ENC_BLOCK_SIZE_S + 1] = { 0 };
+	uint8_t crypt_buffer[MAX_BUFFER_SIZE] = { 0 };
+	char plain_buffer[MAX_BUFFER_SIZE + 1] = { 0 };
+	int bytes_read = 0;
+	while (bytes_read < crypt_len) {
+		auto bytes_to_read = crypt_len - bytes_read < MAX_BUFFER_SIZE ? crypt_len - bytes_read : MAX_BUFFER_SIZE;
+		memcpy(crypt_buffer, crypt + bytes_read, bytes_to_read);
+		ecall_decrypt_aes_ctr(file_metadata[*id].key, file_metadata[*id].ctr, crypt_buffer, bytes_to_read, plain_buffer, bytes_to_read);
+		memcpy(plain + bytes_read, plain_buffer, bytes_to_read);
+		bytes_read += bytes_to_read;
+	}
 
 	// Analyse line
-	auto variant_str = std::string(plainMessage);
-	auto delim_split = variant_str.find('\t', 0);
-	assert(delim_split != std::string::npos);
+	auto variant_str = std::string(plain);
+	auto delim_split = variant_str.find(',', 0);
 	auto position = std::stoi(variant_str.substr(0, delim_split));
 	auto variant = variant_str.substr(delim_split + 1, variant_str.length() - delim_split - 1);
 	if (min_genome_position > position)

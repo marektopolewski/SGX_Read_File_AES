@@ -1,6 +1,8 @@
 #include "OCalls.h"
+
 #include "Constants.h"
 
+#include <cassert>
 #include <fstream>
 #include <stdio.h>
 #include <string>
@@ -37,6 +39,16 @@ void ocall_printf_hex(const uint8_t * num, size_t len)
 
 void ocall_encrypt_file(const char * path)
 {
+	// Define size of the encrypted block
+	size_t block_size;
+	auto suffix = std::string(path).substr(strlen(path) - 3, 3);
+	if (suffix == "sam")
+		block_size = READ_BUFFER_SIZE_L;
+	else if (suffix == "vcf")
+		block_size = READ_BUFFER_SIZE_S;
+	else
+		assert(false && "Unsupported file format for encryption: " && suffix.c_str());
+
 	// Open files
 	std::ifstream file_to_read(GET_DATA_DIR() + path);
 	if (!file_to_read.is_open()) {
@@ -52,21 +64,30 @@ void ocall_encrypt_file(const char * path)
 	}
 
 	// Read and encrypt file
-	char read_buffer[READ_BUFFER_SIZE + 1] = "";
-	uint8_t enc_buffer[READ_BUFFER_SIZE] = "";
+	auto read_block = (char *)malloc(block_size + 1);
+	auto enc_block = (uint8_t *)malloc(block_size);
 	std::string read_line;
 	int inc = 0;
 	while (std::getline(file_to_read, read_line)) {
 
 		// Encrypt line
-		strcpy_s(read_buffer, READ_BUFFER_SIZE, read_line.c_str());
-		ecall_encrypt_aes_ctr(global_eid, read_buffer, READ_BUFFER_SIZE, enc_buffer, READ_BUFFER_SIZE);
+		strcpy_s(read_block, block_size, read_line.c_str());
 
+		char plain_buffer[MAX_BUFFER_SIZE + 1] = { 0 };
+		uint8_t crypt_buffer[MAX_BUFFER_SIZE] = { 0 };
+		int bytes_read = 0;
+		while (bytes_read < block_size) {
+			auto bytes_to_read = block_size - bytes_read < MAX_BUFFER_SIZE ? block_size - bytes_read : MAX_BUFFER_SIZE;
+			memcpy(plain_buffer, read_block + bytes_read, bytes_to_read);
+			ecall_encrypt_aes_ctr(global_eid, plain_buffer, bytes_to_read, crypt_buffer, bytes_to_read);
+			memcpy(enc_block + bytes_read, crypt_buffer, bytes_to_read);
+			bytes_read += bytes_to_read;
+		}
 		// Save to disk
-		file_to_write.write((char *)enc_buffer, READ_BUFFER_SIZE);
+		file_to_write.write((char *)enc_block, block_size);
 
-		memset(read_buffer, 0, READ_BUFFER_SIZE + 1);
-		memset(enc_buffer, 0, READ_BUFFER_SIZE);
+		memset(read_block, 0, block_size + 1);
+		memset(enc_block, 0, block_size);
 	}
 
 	// Close file and return init vector (counter)
