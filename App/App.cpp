@@ -100,7 +100,7 @@ Results run_gwas(Parameters params)
 	printf("Encrypting SAM file(s)...\n");
 	std::vector<uint8_t *> keys;
 	std::vector<uint8_t *> ivs;
-	/*for (const auto & sam_path : params.list_of_files) {
+	for (const auto & sam_path : params.list_of_files) {
 
 		printf("  Encrpyting %s ... ", sam_path.c_str());
 
@@ -135,8 +135,6 @@ Results run_gwas(Parameters params)
 		printf("done.\n");
 	}
 	printf("done.\n\n");
-
-	*/
 
 	///////////////////////////////////// TODO ////////////////////////////////////////////////
 	//
