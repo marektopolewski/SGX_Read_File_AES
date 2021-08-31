@@ -33,10 +33,14 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 } ms_ecall_encrypt_aes_ctr_t;
 
 typedef struct ms_ecall_varcall_load_metadata_t {
-	uint8_t* ms_seal_key;
-	size_t ms_seal_len;
-	uint8_t* ms_ctr;
-	size_t ms_ctr_len;
+	uint8_t* ms_in_seal_key;
+	size_t ms_in_seal_len;
+	uint8_t* ms_in_ctr;
+	size_t ms_in_ctr_len;
+	uint8_t* ms_out_seal_key;
+	size_t ms_out_seal_len;
+	uint8_t* ms_out_ctr;
+	size_t ms_out_ctr_len;
 } ms_ecall_varcall_load_metadata_t;
 
 typedef struct ms_ecall_varcall_get_pos_t {
@@ -103,6 +107,7 @@ typedef struct ms_ocall_varcall_call_sam_file_t {
 
 typedef struct ms_ocall_varcall_flush_output_t {
 	const char* ms_output;
+	size_t ms_out_size;
 } ms_ocall_varcall_flush_output_t;
 
 typedef struct ms_ocall_analysis_add_file_t {
@@ -179,7 +184,7 @@ static sgx_status_t SGX_CDECL Enclave_ocall_varcall_call_sam_file(void* pms)
 static sgx_status_t SGX_CDECL Enclave_ocall_varcall_flush_output(void* pms)
 {
 	ms_ocall_varcall_flush_output_t* ms = SGX_CAST(ms_ocall_varcall_flush_output_t*, pms);
-	ocall_varcall_flush_output(ms->ms_output);
+	ocall_varcall_flush_output(ms->ms_output, ms->ms_out_size);
 
 	return SGX_SUCCESS;
 }
@@ -367,14 +372,18 @@ sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t pla
 	return status;
 }
 
-sgx_status_t ecall_varcall_load_metadata(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, uint8_t* ctr, size_t ctr_len)
+sgx_status_t ecall_varcall_load_metadata(sgx_enclave_id_t eid, uint8_t* in_seal_key, size_t in_seal_len, uint8_t* in_ctr, size_t in_ctr_len, uint8_t* out_seal_key, size_t out_seal_len, uint8_t* out_ctr, size_t out_ctr_len)
 {
 	sgx_status_t status;
 	ms_ecall_varcall_load_metadata_t ms;
-	ms.ms_seal_key = seal_key;
-	ms.ms_seal_len = seal_len;
-	ms.ms_ctr = ctr;
-	ms.ms_ctr_len = ctr_len;
+	ms.ms_in_seal_key = in_seal_key;
+	ms.ms_in_seal_len = in_seal_len;
+	ms.ms_in_ctr = in_ctr;
+	ms.ms_in_ctr_len = in_ctr_len;
+	ms.ms_out_seal_key = out_seal_key;
+	ms.ms_out_seal_len = out_seal_len;
+	ms.ms_out_ctr = out_ctr;
+	ms.ms_out_ctr_len = out_ctr_len;
 	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
 	return status;
 }

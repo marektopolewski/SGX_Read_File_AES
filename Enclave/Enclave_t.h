@@ -20,7 +20,7 @@ void ecall_gen_key(uint8_t* key, size_t len);
 void ecall_gen_ctr(uint8_t* ctr, size_t len);
 void ecall_encrypt(uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
 void ecall_encrypt_aes_ctr(char* plain, size_t plain_len, uint8_t* crypt, size_t crypt_len);
-void ecall_varcall_load_metadata(uint8_t* seal_key, size_t seal_len, uint8_t* ctr, size_t ctr_len);
+void ecall_varcall_load_metadata(uint8_t* in_seal_key, size_t in_seal_len, uint8_t* in_ctr, size_t in_ctr_len, uint8_t* out_seal_key, size_t out_seal_len, uint8_t* out_ctr, size_t out_ctr_len);
 void ecall_varcall_get_pos(uint8_t* crypt, size_t crypt_len, int* mapq, int* pos, int* ignore);
 void ecall_varcall_find_mutations(const char* prefix, const char* ref_seq);
 void ecall_varcall_flush_output(int* flush_all);
@@ -34,7 +34,7 @@ sgx_status_t sl_run_switchless_tworker(void);
 
 sgx_status_t SGX_CDECL ocall_encrypt_file(const char* path);
 sgx_status_t SGX_CDECL ocall_varcall_call_sam_file(const char* path, int* mapq);
-sgx_status_t SGX_CDECL ocall_varcall_flush_output(const char* output);
+sgx_status_t SGX_CDECL ocall_varcall_flush_output(const char* output, size_t out_size);
 sgx_status_t SGX_CDECL ocall_analysis_add_file(const char* path, int* success);
 sgx_status_t SGX_CDECL ocall_analysis_start(void);
 sgx_status_t SGX_CDECL ocall_analysis_flush_output(const char* output);

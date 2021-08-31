@@ -10,7 +10,7 @@ void ocall_decrypt_file(const char * path);
 
 void ocall_varcall_set_ref_file(const char * path);
 void ocall_varcall_call_sam_file(const char * path, int * mapq);
-void ocall_varcall_flush_output(const char * output);
+void ocall_varcall_flush_output(const char * output, size_t out_size);
 
 void ocall_analysis_add_file(const char * path, int * success);
 void ocall_analysis_start();

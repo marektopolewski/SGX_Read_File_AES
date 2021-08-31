@@ -44,8 +44,6 @@ void ocall_encrypt_file(const char * path)
 	auto suffix = std::string(path).substr(strlen(path) - 3, 3);
 	if (suffix == "sam")
 		block_size = READ_BUFFER_SIZE_L;
-	else if (suffix == "vcf")
-		block_size = READ_BUFFER_SIZE_S;
 	else
 		assert(false && "Unsupported file format for encryption: " && suffix.c_str());
 

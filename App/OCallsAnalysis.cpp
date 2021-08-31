@@ -54,7 +54,7 @@ void ocall_analysis_start()
 			}
 
 			// Read and analyse a batch of a file
-			char read_buffer[READ_BUFFER_SIZE_S] = "";
+			char read_buffer[READ_BUFFER_SIZE_S + 1] = { 0 };
 			int batch_it = 0;
 			while (batch_it < READ_BATCH_SIZE) {
 
@@ -67,7 +67,7 @@ void ocall_analysis_start()
 				// Decrypt and analyse the line
 				int pause = 0;
 				ecall_analysis_read_line(global_eid, &it, (uint8_t *)read_buffer, READ_BUFFER_SIZE_S, &pause);
-				memset(read_buffer, 0, READ_BUFFER_SIZE_S);
+				memset(read_buffer, 0, READ_BUFFER_SIZE_S + 1);
 
 				// Pause reading current file if too far ahead of global position
 				if (pause == 1)

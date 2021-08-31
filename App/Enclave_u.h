@@ -25,7 +25,7 @@ void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_varcall_call_sam_file, (const char* pat
 #endif
 #ifndef OCALL_VARCALL_FLUSH_OUTPUT_DEFINED__
 #define OCALL_VARCALL_FLUSH_OUTPUT_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_varcall_flush_output, (const char* output));
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_varcall_flush_output, (const char* output, size_t out_size));
 #endif
 #ifndef OCALL_ANALYSIS_ADD_FILE_DEFINED__
 #define OCALL_ANALYSIS_ADD_FILE_DEFINED__
@@ -85,7 +85,7 @@ sgx_status_t ecall_gen_key(sgx_enclave_id_t eid, uint8_t* key, size_t len);
 sgx_status_t ecall_gen_ctr(sgx_enclave_id_t eid, uint8_t* ctr, size_t len);
 sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, const char* path, uint8_t* ctr, size_t ctr_len);
 sgx_status_t ecall_encrypt_aes_ctr(sgx_enclave_id_t eid, char* plain, size_t plain_len, uint8_t* crypt, size_t crypt_len);
-sgx_status_t ecall_varcall_load_metadata(sgx_enclave_id_t eid, uint8_t* seal_key, size_t seal_len, uint8_t* ctr, size_t ctr_len);
+sgx_status_t ecall_varcall_load_metadata(sgx_enclave_id_t eid, uint8_t* in_seal_key, size_t in_seal_len, uint8_t* in_ctr, size_t in_ctr_len, uint8_t* out_seal_key, size_t out_seal_len, uint8_t* out_ctr, size_t out_ctr_len);
 sgx_status_t ecall_varcall_get_pos(sgx_enclave_id_t eid, uint8_t* crypt, size_t crypt_len, int* mapq, int* pos, int* ignore);
 sgx_status_t ecall_varcall_find_mutations(sgx_enclave_id_t eid, const char* prefix, const char* ref_seq);
 sgx_status_t ecall_varcall_flush_output(sgx_enclave_id_t eid, int* flush_all);

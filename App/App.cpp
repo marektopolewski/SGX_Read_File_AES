@@ -98,8 +98,8 @@ Results run_gwas(Parameters params)
 
 	// Encrypt SAM files
 	printf("Encrypting SAM file(s)...\n");
-	std::vector<uint8_t *> keys;
-	std::vector<uint8_t *> ivs;
+	std::vector<uint8_t *> sam_keys;
+	std::vector<uint8_t *> sam_ivs;
 	for (const auto & sam_path : params.list_of_files) {
 
 		printf("  Encrpyting %s ... ", sam_path.c_str());
@@ -107,12 +107,12 @@ Results run_gwas(Parameters params)
 		// Generate AES key and seal it
 		auto key = (uint8_t *)malloc(seal_len);
 		generate_encryption_key(key, seal_len);
-		keys.push_back(key);
+		sam_keys.push_back(key);
 
 		// Generate AES initialisation vector
 		auto iv = (uint8_t *)malloc(SGX_AESCTR_CTR_SIZE);
 		generate_init_vector(iv);
-		ivs.push_back(iv);
+		sam_ivs.push_back(iv);
 
 		// Encrypt file using generated parameters
 		ret = ecall_encrypt(global_eid, key, seal_len, sam_path.c_str(), iv, SGX_AESCTR_CTR_SIZE);
@@ -127,48 +127,29 @@ Results run_gwas(Parameters params)
 
 	// Call variants on each SAM file against the reference FASTA file
 	printf("Calling variants on SAM file(s)...\n");
+	std::vector<uint8_t *> vcf_keys;
+	std::vector<uint8_t *> vcf_ivs;
+
+	// Set reference FASTA file
 	ocall_varcall_set_ref_file(params.reference_genome.c_str());
+	
 	for (int it = 0; it < params.list_of_files.size(); ++it) {
 		printf("  Calling %s ...", params.list_of_files[it].c_str());
-		ecall_varcall_load_metadata(global_eid, keys[it], seal_len, ivs[it], SGX_AESCTR_CTR_SIZE);
+
+		// Load key and counter into the enclave, retrieve for VCF decryption
+		auto key = (uint8_t *)malloc(seal_len);
+		auto iv = (uint8_t *)malloc(SGX_AESCTR_CTR_SIZE);
+		ecall_varcall_load_metadata(global_eid, sam_keys[it], seal_len, sam_ivs[it], SGX_AESCTR_CTR_SIZE,
+								    key, seal_len, iv, SGX_AESCTR_CTR_SIZE);
+		vcf_keys.push_back(key);
+		vcf_ivs.push_back(iv);
+
+		// Perform variant calling
 		ocall_varcall_call_sam_file(params.list_of_files[it].c_str(), &params.map_quality_threshold);
 		printf("done.\n");
 	}
-	printf("done.\n\n");
-
-	///////////////////////////////////// TODO ////////////////////////////////////////////////
-	//
-	// VCF files should be written to disk encrypted instead in plaintext and then encrypted.
-	//
-	///////////////////////////////////// TODO ////////////////////////////////////////////////
-
-	printf("Encrypting VCF file(s)...\n");
-	keys.clear();
-	ivs.clear();
-	for (const auto & sam_path : params.list_of_files) {
-
-		auto vcf_path = MAKE_SUB_PATH(sam_path.c_str(), "vcf");
-		printf("  Encrpyting %s ... ", vcf_path.c_str());
-
-		// Generate AES key and seal it
-		auto key = (uint8_t *)malloc(seal_len);
-		generate_encryption_key(key, seal_len);
-		keys.push_back(key);
-
-		// Generate AES initialisation vector
-		auto iv = (uint8_t *)malloc(SGX_AESCTR_CTR_SIZE);
-		generate_init_vector(iv);
-		ivs.push_back(iv);
-
-		// Encrypt file using generated parameters
-		ret = ecall_encrypt(global_eid, key, seal_len, vcf_path.c_str(), iv, SGX_AESCTR_CTR_SIZE);
-		if (ret != SGX_SUCCESS) {
-			ErrorSignal::print_error_message(ret);
-			getchar();
-			throw std::exception("Could not encrypt data");
-		}
-		printf("done.\n");
-	}
+	sam_keys.clear();
+	sam_ivs.clear();
 	printf("done.\n\n");
 
 
@@ -188,7 +169,7 @@ Results run_gwas(Parameters params)
 	// Open all reuqired files for the analysis
 	printf("Opening VCF file(s) for analysis...\n");
 	for (int it = 0; it < params.list_of_files.size(); ++it) {
-		add_vcf_file(MAKE_SUB_PATH(params.list_of_files[it].c_str(), "vcf"), keys[it], seal_len, ivs[it]);
+		add_vcf_file(MAKE_SUB_PATH(params.list_of_files[it].c_str(), "vcf"), vcf_keys[it], seal_len, vcf_ivs[it]);
 	}
 	printf("done.\n\n");
 

@@ -31,8 +31,8 @@ void ocall_varcall_call_sam_file(const char * path, int * mapq)
 	}
 
 	// Create the variant caller file handle
-	auto vcf_path = MAKE_SUB_PATH(path, "vcf");
-	vcf_file = new std::ofstream(GET_DATA_DIR() + vcf_path);
+	auto vcf_path = MAKE_SUB_PATH(path, "vcf") + ".enc";
+	vcf_file = new std::ofstream(GET_DATA_DIR() + vcf_path, std::ios::binary);
 	if (!vcf_file->is_open()) {
 		printf("Fatal error: Could not open the output file: \"%s\"\n", vcf_path.c_str());
 		return;
@@ -40,6 +40,7 @@ void ocall_varcall_call_sam_file(const char * path, int * mapq)
 
 	// Iteratively call variants scanning through FASTA and SAM in parallel
 	char read_buffer[READ_BUFFER_SIZE_L + 1];
+	int it = 0;
 	while (sam_file.read(read_buffer, READ_BUFFER_SIZE_L)) {
 
 		// Decrypt line and return read position
@@ -63,7 +64,7 @@ void ocall_varcall_call_sam_file(const char * path, int * mapq)
 	vcf_file->close();
 }
 
-void ocall_varcall_flush_output(const char * output)
+void ocall_varcall_flush_output(const char * output, size_t out_size)
 {
-	*vcf_file << output;
+	vcf_file->write(output, out_size);
 }

@@ -59,10 +59,14 @@ typedef struct ms_ecall_encrypt_aes_ctr_t {
 } ms_ecall_encrypt_aes_ctr_t;
 
 typedef struct ms_ecall_varcall_load_metadata_t {
-	uint8_t* ms_seal_key;
-	size_t ms_seal_len;
-	uint8_t* ms_ctr;
-	size_t ms_ctr_len;
+	uint8_t* ms_in_seal_key;
+	size_t ms_in_seal_len;
+	uint8_t* ms_in_ctr;
+	size_t ms_in_ctr_len;
+	uint8_t* ms_out_seal_key;
+	size_t ms_out_seal_len;
+	uint8_t* ms_out_ctr;
+	size_t ms_out_ctr_len;
 } ms_ecall_varcall_load_metadata_t;
 
 typedef struct ms_ecall_varcall_get_pos_t {
@@ -129,6 +133,7 @@ typedef struct ms_ocall_varcall_call_sam_file_t {
 
 typedef struct ms_ocall_varcall_flush_output_t {
 	const char* ms_output;
+	size_t ms_out_size;
 } ms_ocall_varcall_flush_output_t;
 
 typedef struct ms_ocall_analysis_add_file_t {
@@ -517,71 +522,121 @@ static sgx_status_t SGX_CDECL sgx_ecall_varcall_load_metadata(void* pms)
 	sgx_lfence();
 	ms_ecall_varcall_load_metadata_t* ms = SGX_CAST(ms_ecall_varcall_load_metadata_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	uint8_t* _tmp_seal_key = ms->ms_seal_key;
-	size_t _tmp_seal_len = ms->ms_seal_len;
-	size_t _len_seal_key = _tmp_seal_len;
-	uint8_t* _in_seal_key = NULL;
-	uint8_t* _tmp_ctr = ms->ms_ctr;
-	size_t _tmp_ctr_len = ms->ms_ctr_len;
-	size_t _len_ctr = _tmp_ctr_len;
-	uint8_t* _in_ctr = NULL;
+	uint8_t* _tmp_in_seal_key = ms->ms_in_seal_key;
+	size_t _tmp_in_seal_len = ms->ms_in_seal_len;
+	size_t _len_in_seal_key = _tmp_in_seal_len;
+	uint8_t* _in_in_seal_key = NULL;
+	uint8_t* _tmp_in_ctr = ms->ms_in_ctr;
+	size_t _tmp_in_ctr_len = ms->ms_in_ctr_len;
+	size_t _len_in_ctr = _tmp_in_ctr_len;
+	uint8_t* _in_in_ctr = NULL;
+	uint8_t* _tmp_out_seal_key = ms->ms_out_seal_key;
+	size_t _tmp_out_seal_len = ms->ms_out_seal_len;
+	size_t _len_out_seal_key = _tmp_out_seal_len;
+	uint8_t* _in_out_seal_key = NULL;
+	uint8_t* _tmp_out_ctr = ms->ms_out_ctr;
+	size_t _tmp_out_ctr_len = ms->ms_out_ctr_len;
+	size_t _len_out_ctr = _tmp_out_ctr_len;
+	uint8_t* _in_out_ctr = NULL;
 
-	CHECK_UNIQUE_POINTER(_tmp_seal_key, _len_seal_key);
-	CHECK_UNIQUE_POINTER(_tmp_ctr, _len_ctr);
+	CHECK_UNIQUE_POINTER(_tmp_in_seal_key, _len_in_seal_key);
+	CHECK_UNIQUE_POINTER(_tmp_in_ctr, _len_in_ctr);
+	CHECK_UNIQUE_POINTER(_tmp_out_seal_key, _len_out_seal_key);
+	CHECK_UNIQUE_POINTER(_tmp_out_ctr, _len_out_ctr);
 
 	//
 	// fence after pointer checks
 	//
 	sgx_lfence();
 
-	if (_tmp_seal_key != NULL && _len_seal_key != 0) {
-		if ( _len_seal_key % sizeof(*_tmp_seal_key) != 0)
+	if (_tmp_in_seal_key != NULL && _len_in_seal_key != 0) {
+		if ( _len_in_seal_key % sizeof(*_tmp_in_seal_key) != 0)
 		{
 			status = SGX_ERROR_INVALID_PARAMETER;
 			goto err;
 		}
-		_in_seal_key = (uint8_t*)malloc(_len_seal_key);
-		if (_in_seal_key == NULL) {
+		_in_in_seal_key = (uint8_t*)malloc(_len_in_seal_key);
+		if (_in_in_seal_key == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
 			goto err;
 		}
 
-		if (memcpy_s(_in_seal_key, _len_seal_key, _tmp_seal_key, _len_seal_key)) {
+		if (memcpy_s(_in_in_seal_key, _len_in_seal_key, _tmp_in_seal_key, _len_in_seal_key)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
 
 	}
-	if (_tmp_ctr != NULL && _len_ctr != 0) {
-		if ( _len_ctr % sizeof(*_tmp_ctr) != 0)
+	if (_tmp_in_ctr != NULL && _len_in_ctr != 0) {
+		if ( _len_in_ctr % sizeof(*_tmp_in_ctr) != 0)
 		{
 			status = SGX_ERROR_INVALID_PARAMETER;
 			goto err;
 		}
-		_in_ctr = (uint8_t*)malloc(_len_ctr);
-		if (_in_ctr == NULL) {
+		_in_in_ctr = (uint8_t*)malloc(_len_in_ctr);
+		if (_in_in_ctr == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
 			goto err;
 		}
 
-		if (memcpy_s(_in_ctr, _len_ctr, _tmp_ctr, _len_ctr)) {
+		if (memcpy_s(_in_in_ctr, _len_in_ctr, _tmp_in_ctr, _len_in_ctr)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
 
 	}
+	if (_tmp_out_seal_key != NULL && _len_out_seal_key != 0) {
+		if ( _len_out_seal_key % sizeof(*_tmp_out_seal_key) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		if ((_in_out_seal_key = (uint8_t*)malloc(_len_out_seal_key)) == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_varcall_load_metadata(_in_seal_key, _tmp_seal_len, _in_ctr, _tmp_ctr_len);
-	if (_in_ctr) {
-		if (memcpy_s(_tmp_ctr, _len_ctr, _in_ctr, _len_ctr)) {
+		memset((void*)_in_out_seal_key, 0, _len_out_seal_key);
+	}
+	if (_tmp_out_ctr != NULL && _len_out_ctr != 0) {
+		if ( _len_out_ctr % sizeof(*_tmp_out_ctr) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		if ((_in_out_ctr = (uint8_t*)malloc(_len_out_ctr)) == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memset((void*)_in_out_ctr, 0, _len_out_ctr);
+	}
+
+	ecall_varcall_load_metadata(_in_in_seal_key, _tmp_in_seal_len, _in_in_ctr, _tmp_in_ctr_len, _in_out_seal_key, _tmp_out_seal_len, _in_out_ctr, _tmp_out_ctr_len);
+	if (_in_in_ctr) {
+		if (memcpy_s(_tmp_in_ctr, _len_in_ctr, _in_in_ctr, _len_in_ctr)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_out_seal_key) {
+		if (memcpy_s(_tmp_out_seal_key, _len_out_seal_key, _in_out_seal_key, _len_out_seal_key)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_out_ctr) {
+		if (memcpy_s(_tmp_out_ctr, _len_out_ctr, _in_out_ctr, _len_out_ctr)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
 	}
 
 err:
-	if (_in_seal_key) free(_in_seal_key);
-	if (_in_ctr) free(_in_ctr);
+	if (_in_in_seal_key) free(_in_in_seal_key);
+	if (_in_in_ctr) free(_in_in_ctr);
+	if (_in_out_seal_key) free(_in_out_seal_key);
+	if (_in_out_ctr) free(_in_out_ctr);
 	return status;
 }
 
@@ -1342,10 +1397,10 @@ sgx_status_t SGX_CDECL ocall_varcall_call_sam_file(const char* path, int* mapq)
 	return status;
 }
 
-sgx_status_t SGX_CDECL ocall_varcall_flush_output(const char* output)
+sgx_status_t SGX_CDECL ocall_varcall_flush_output(const char* output, size_t out_size)
 {
 	sgx_status_t status = SGX_SUCCESS;
-	size_t _len_output = output ? strlen(output) + 1 : 0;
+	size_t _len_output = out_size;
 
 	ms_ocall_varcall_flush_output_t* ms = NULL;
 	size_t ocalloc_size = sizeof(ms_ocall_varcall_flush_output_t);
@@ -1382,6 +1437,7 @@ sgx_status_t SGX_CDECL ocall_varcall_flush_output(const char* output)
 		ms->ms_output = NULL;
 	}
 	
+	ms->ms_out_size = out_size;
 	status = sgx_ocall(2, ms);
 
 	if (status == SGX_SUCCESS) {

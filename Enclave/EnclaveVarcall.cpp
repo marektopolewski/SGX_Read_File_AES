@@ -1,4 +1,5 @@
 #include "Enclave_t.h"
+#include "sgx_trts.h"
 #include "sgx_tseal.h"
 
 #include "Cigar.h"
@@ -23,8 +24,10 @@
 #define VARIANT_BATCH_SIZE 100
 
 
-static uint8_t unsealed_key[SGX_AESCTR_KEY_SIZE] = { 0 };
-static uint8_t counter_iv[COUNTER_BLOCK_SIZE] = { 0 };
+static uint8_t sam_key[SGX_AESCTR_KEY_SIZE] = { 0 };
+static uint8_t sam_ctr[COUNTER_BLOCK_SIZE] = { 0 };
+static uint8_t vcf_key[SGX_AESCTR_KEY_SIZE] = { 0 };
+static uint8_t vcf_ctr[COUNTER_BLOCK_SIZE] = { 0 };
 
 static int m_iterSinceFlush = 0;
 static int m_pos;
@@ -39,14 +42,42 @@ void _save(size_t pos, const std::string & ref, const std::string & alt)
 	m_set.emplace(pos, ref + "," + alt);
 }
 
-
-void ecall_varcall_load_metadata(uint8_t * seal_key, size_t seal_len, uint8_t * ctr, size_t ctr_len)
+void _encrypt(const char * plain_block, uint8_t * crypt_block)
 {
-	uint32_t keyLen = SGX_AESCTR_KEY_SIZE;
-	auto seal_status = sgx_unseal_data((sgx_sealed_data_t *)seal_key, NULL, NULL, unsealed_key, &keyLen);
-	assert(seal_status == SGX_SUCCESS);
+	char plain_buffer[MAX_BUFFER_SIZE + 1] = { 0 };
+	uint8_t crypt_buffer[MAX_BUFFER_SIZE] = { 0 };
+	int bytes_read = 0;
+	while (bytes_read < ENC_BLOCK_SIZE_S) {
+		auto bytes_to_read = ENC_BLOCK_SIZE_S - bytes_read < MAX_BUFFER_SIZE
+						   ? ENC_BLOCK_SIZE_S - bytes_read : MAX_BUFFER_SIZE;
+		memcpy(plain_buffer, plain_block + bytes_read, bytes_to_read);
+		sgx_aes_ctr_encrypt((sgx_aes_ctr_128bit_key_t *)vcf_key, (uint8_t *)plain_buffer,
+							bytes_to_read, vcf_ctr, COUNTER_BLOCK_INC, crypt_buffer);
+		memcpy(crypt_block + bytes_read, crypt_buffer, bytes_to_read);
+		bytes_read += bytes_to_read;
+	}
+}
 
-	memcpy(counter_iv, ctr, COUNTER_BLOCK_SIZE);
+
+void ecall_varcall_load_metadata(uint8_t * in_seal_key, size_t in_seal_len,
+								 uint8_t * in_ctr, size_t in_ctr_len,
+								 uint8_t * out_seal_key, size_t out_seal_len,
+								 uint8_t * out_ctr, size_t out_ctr_len)
+{
+	// Unseal SAM key and counter
+	uint32_t key_len = SGX_AESCTR_KEY_SIZE;
+	auto unseal_status = sgx_unseal_data((sgx_sealed_data_t *)in_seal_key, NULL, NULL, sam_key, &key_len);
+	assert(unseal_status == SGX_SUCCESS && "Could not unseal SAM key");
+	memcpy(sam_ctr, in_ctr, COUNTER_BLOCK_SIZE);
+
+	// Generate VCF key and counter
+	sgx_read_rand(vcf_key, SGX_AESCTR_KEY_SIZE);
+	auto seal_status = sgx_seal_data(0, NULL, SGX_AESCTR_KEY_SIZE, vcf_key,
+								     out_seal_len, (sgx_sealed_data_t *)out_seal_key);
+	assert(seal_status == SGX_SUCCESS && "Could not seal VCF key");
+
+	sgx_read_rand(vcf_ctr, COUNTER_BLOCK_SIZE);
+	memcpy(out_ctr, vcf_ctr, COUNTER_BLOCK_SIZE);
 }
 
 void ecall_varcall_get_pos(uint8_t * crypt, size_t crypt_len, int * mapq, int * pos, int * ignore)
@@ -65,7 +96,7 @@ void ecall_varcall_get_pos(uint8_t * crypt, size_t crypt_len, int * mapq, int * 
 	while (bytes_read < crypt_len) {
 		auto bytes_to_read = crypt_len - bytes_read < MAX_BUFFER_SIZE ? crypt_len - bytes_read : MAX_BUFFER_SIZE;
 		memcpy(crypt_buffer, crypt + bytes_read, bytes_to_read);
-		ecall_decrypt_aes_ctr(unsealed_key, counter_iv, crypt_buffer, bytes_to_read, plain_buffer, bytes_to_read);
+		ecall_decrypt_aes_ctr(sam_key, sam_ctr, crypt_buffer, bytes_to_read, plain_buffer, bytes_to_read);
 		memcpy(plain + bytes_read, plain_buffer, bytes_to_read);
 		bytes_read += bytes_to_read;
 	}
@@ -154,17 +185,23 @@ void ecall_varcall_find_mutations(const char * prefix, const char * ref_seq)
 void ecall_varcall_flush_output(int * flush_all)
 {
 	// Build the output to flush in a string
-	std::string output = "";
 	auto entryIt = m_set.begin();
 	for (; entryIt != m_set.end(); ++entryIt) {
 		if (entryIt->pos + SEQ_READ_SIZE >= m_pos && *flush_all != 1)
 			break;
-		output += std::to_string(entryIt->pos) + "," + entryIt->variant + "\n";
+		auto output = std::to_string(entryIt->pos) + "," + entryIt->variant;
+
+		// Encrypt line
+		char plain_block[ENC_BLOCK_SIZE_S + 1] = { 0 };
+		uint8_t crypt_block[ENC_BLOCK_SIZE_S] = { 0 };
+		strncpy(plain_block, output.c_str(), ENC_BLOCK_SIZE_S);
+		_encrypt(plain_block, crypt_block);
+
+		// Write line
+		ocall_varcall_flush_output((char *)crypt_block, ENC_BLOCK_SIZE_S);
 	}
 
 	// Flush and remove selected SNPs
-	ocall_varcall_flush_output(output.c_str());
 	m_set.erase(m_set.begin(), entryIt);
-
 	m_iterSinceFlush = 0;
 }
