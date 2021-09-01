@@ -333,10 +333,10 @@
     <ClCompile Include="ErrorSignal.cpp" />
     <ClCompile Include="OCalls.cpp" />
     <ClCompile Include="OCallsAnalysis.cpp" />
+    <ClCompile Include="OCallsVarcall.cpp" />
     <ClCompile Include="ReferenceHandler.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerFrontEnd.cpp" />
-    <ClCompile Include="OCallsSequence.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />

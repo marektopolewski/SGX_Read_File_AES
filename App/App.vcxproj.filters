@@ -39,10 +39,10 @@
     <ClCompile Include="OCallsAnalysis.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OCallsSequence.cpp">
+    <ClCompile Include="ReferenceHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ReferenceHandler.cpp">
+    <ClCompile Include="OCallsVarcall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

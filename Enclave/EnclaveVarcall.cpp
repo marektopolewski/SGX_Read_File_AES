@@ -90,14 +90,11 @@ void ecall_varcall_get_pos(uint8_t * crypt, size_t crypt_len, int * mapq, int * 
 
 	// Decrypt line
 	char plain[ENC_BLOCK_SIZE_L + 1] = { 0 };
-	char plain_buffer[MAX_BUFFER_SIZE + 1] = { 0 };
-	uint8_t crypt_buffer[MAX_BUFFER_SIZE] = { 0 };
 	int bytes_read = 0;
 	while (bytes_read < crypt_len) {
 		auto bytes_to_read = crypt_len - bytes_read < MAX_BUFFER_SIZE ? crypt_len - bytes_read : MAX_BUFFER_SIZE;
-		memcpy(crypt_buffer, crypt + bytes_read, bytes_to_read);
-		ecall_decrypt_aes_ctr(sam_key, sam_ctr, crypt_buffer, bytes_to_read, plain_buffer, bytes_to_read);
-		memcpy(plain + bytes_read, plain_buffer, bytes_to_read);
+		ecall_decrypt_aes_ctr(sam_key, sam_ctr, crypt + bytes_read, bytes_to_read,
+							  plain + bytes_read, bytes_to_read);
 		bytes_read += bytes_to_read;
 	}
 
