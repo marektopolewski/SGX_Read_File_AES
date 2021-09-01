@@ -54,17 +54,15 @@ void ecall_encrypt(uint8_t * seal_key, size_t seal_len,
 	memset(counterIv, 0, COUNTER_BLOCK_SIZE);
 }
 
-void ecall_encrypt_aes_ctr(char * plainMessage, size_t plain_len,
-						   uint8_t * cryptMessage, size_t crypt_len)
+void ecall_encrypt_aes_ctr(char * plain_message, size_t plain_len,
+						   uint8_t * crypt_message, size_t crypt_len)
 {
-	uint8_t p_dst[BUFLEN];
 	sgx_aes_ctr_encrypt(
 		(sgx_aes_ctr_128bit_key_t *)unsealedKey,	// p_key			128-bit key
-		(uint8_t *)plainMessage,					// p_src			input data stream
+		(uint8_t *)plain_message,					// p_src			input data stream
 		plain_len,									// src_len			length of p_src
 		counterIv,									// p_ctr			init vector (counter)
 		COUNTER_BLOCK_INC,							// ctr_inc_bits		bits to increment in counter
-		p_dst										// p_dst			output data stream
+		crypt_message								// p_dst			output data stream
 	);
-	memcpy(cryptMessage, p_dst, crypt_len);
 }

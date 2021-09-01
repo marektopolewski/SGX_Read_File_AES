@@ -7,18 +7,16 @@
 
 #include <memory>
 
-void ecall_decrypt_aes_ctr(uint8_t * unsealedKey, uint8_t * counterIv,
-						   uint8_t * cryptMessage, size_t crypt_len,
-						   char * plainMessage, size_t plain_len)
+void ecall_decrypt_aes_ctr(uint8_t * unsealed_key, uint8_t * counter_iv,
+						   uint8_t * crypt_message, size_t crypt_len,
+						   char * plain_message, size_t plain_len)
 {
-	uint8_t p_dst[BUFLEN] = { 0 };
 	sgx_aes_ctr_decrypt(
-		(sgx_aes_ctr_128bit_key_t *)unsealedKey,	// p_key			128-bit key
-		cryptMessage,								// p_src			input data stream
+		(sgx_aes_ctr_128bit_key_t *)unsealed_key,	// p_key			128-bit key
+		crypt_message,								// p_src			input data stream
 		crypt_len,									// src_len			length of p_src
-		counterIv,									// p_ctr			init vector (counter)
+		counter_iv,									// p_ctr			init vector (counter)
 		COUNTER_BLOCK_INC,							// ctr_inc_bits		bits to increment in counter
-		p_dst										// p_dst			output data stream
+		(uint8_t *)plain_message					// p_dst			output data stream
 	);
-	memcpy(plainMessage, p_dst, plain_len);
 }

@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-#define BUFLEN 2048
+#define BUFLEN 32
 #define COUNTER_BLOCK_SIZE 16
 #define COUNTER_BLOCK_INC 8
 
