@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 #include <exception>
+#include <chrono>
 
 sgx_enclave_id_t global_eid = 0;
 
@@ -125,6 +126,9 @@ Results run_gwas(Parameters params)
 	}
 	printf("done.\n\n");
 
+	using namespace std::chrono;
+	auto start = high_resolution_clock::now();
+
 	// Call variants on each SAM file against the reference FASTA file
 	printf("Calling variants on SAM file(s)...\n");
 	std::vector<uint8_t *> vcf_keys;
@@ -182,9 +186,13 @@ Results run_gwas(Parameters params)
 	destroy_enclave();
 	printf("Enclave stopped.\n");
 
+	auto finish = high_resolution_clock::now();
+	int elapsed_time = duration_cast<milliseconds>(finish - start).count();
+
 	// Read output into memory if required
 	return {
 		"success",
+		elapsed_time,
 		params.return_output ? ocall_return_output()
 			: "Results path: \"" + GET_DATA_DIR() + "data/csv/analysis.csv\""
 	};

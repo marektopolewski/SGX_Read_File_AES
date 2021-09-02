@@ -21,6 +21,7 @@ struct Parameters
 struct Results
 {
 	std::string status;
+	int elapsed_time_ms;
 	std::string result;
 };
 

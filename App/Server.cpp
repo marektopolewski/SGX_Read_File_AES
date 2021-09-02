@@ -91,23 +91,22 @@ void GwasServer::processGwasAnalysis(const HttpRequest & msg)
 		auto map_quality = std::stoi(params.at(U("mapq")));
 		auto return_output = params.find(U("return")) != params.end();
 
-		auto res = analysisCb_({
-			reference_genome,
-			std::move(list_of_files),
-			std::move(region_of_interest),
-			map_quality,
-			return_output
-		});
-		
-		web::json::value json;
-		for (const auto & param : params)
-			json[U("parameters")][param.first] = web::json::value(param.second);
-		/* for (size_t i = 0; i < res.samples.size(); ++i) {
-			json[U("result")][i][U("snp")] = web::json::value(toStringT(res.samples[i].snp));
-			json[U("result")][i][U("val")] = web::json::value(res.samples[i].value);
-		} */
-		json[U("result")] = web::json::value(toStringT(res.result));
-		msg.reply(web::http::status_codes::OK, json);
+		try {
+			auto res = analysisCb_({reference_genome, std::move(list_of_files),
+									std::move(region_of_interest),
+									map_quality, return_output });
+			web::json::value json;
+			for (const auto & param : params)
+				json[U("parameters")][param.first] = web::json::value(param.second);
+			json[U("status")] = web::json::value(toStringT(res.status));
+			json[U("time")] = web::json::value(res.elapsed_time_ms);
+			json[U("result")] = web::json::value(toStringT(res.result));
+			msg.reply(web::http::status_codes::OK, json);
+		}
+		catch (std::exception exception) {
+			msg.reply(web::http::status_codes::InternalError,
+					  web::json::value(exception.what()));
+		}
 	});
 }
 
